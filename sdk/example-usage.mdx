@@ -1,0 +1,469 @@
+---
+title: Example Usage
+description: Real-world examples of using execute(), embed(), and retrieve() methods
+---
+
+## Text Generation with execute()
+
+The `execute()` method generates text using AI providers. It returns a `Promise<string>` that resolves with the complete generated text.
+
+### Simple Prompt
+
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Simple prompt-based request with streaming
+const fullText = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  prompt: "What is the capital of Great Britain?",
+  onProgress: (chunk, accumulatedText) => {
+    console.log(accumulatedText);
+  }
+});
+
+console.log('Returned:', fullText);
+```
+
+### Messages Format
+
+Use the messages format for multi-turn conversations or system prompts:
+
+```typescript
+const finalFromMessages = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  messages: [
+    { role: "system", content: "You are a helpful geography assistant." },
+    { role: "user", content: "What is the capital of Great Britain?" }
+  ],
+  onProgress: (_chunk, text) => console.log(text)
+});
+```
+
+### Streaming Text Generation
+
+Stream text as it's being generated with the `onProgress` callback:
+
+```typescript
+const abortController = new AbortController();
+const paragraph = document.createElement('p');
+
+try {
+  const fullText = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Write a short story about AI",
+    abortController,
+    onProgress: (_chunk, accumulatedText) => {
+      // Update UI with accumulated text
+      paragraph.setText(accumulatedText);
+    },
+  });
+  
+  console.log(`✅ Completed: ${fullText.length} characters generated`);
+} catch (e) {
+  if ((e as Error).message === 'Aborted') {
+    console.log('Generation aborted intentionally');
+  } else {
+    console.error(e);
+  }
+}
+```
+
+### Aborting Generation
+
+Use an `AbortController` to cancel generation:
+
+```typescript
+const abortController = new AbortController();
+
+try {
+  const final = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Stream something...",
+    abortController,
+    onProgress: (_c, text) => {
+      console.log(text);
+      // Abort after 50 characters
+      if (text.length > 50) {
+        abortController.abort();
+      }
+    }
+  });
+  console.log('Completed:', final);
+} catch (e) {
+  if ((e as Error).message === 'Aborted') {
+    console.log('Generation aborted intentionally');
+  } else {
+    console.error(e);
+  }
+}
+```
+
+<Note>
+Some OpenAI-compatible providers (e.g. OpenRouter) stream `delta.reasoning` chunks. These are included in the text output wrapped in `<think>...</think>` tags.
+</Note>
+
+### Vision: Images in Messages
+
+Analyze images by including them in message content blocks:
+
+```typescript
+const imageBlocksResult = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  messages: [
+    { role: "system", content: "You are a helpful image analyst." },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Describe what you see in this image" },
+        { 
+          type: "image_url", 
+          image_url: { url: "data:image/jpeg;base64,/9j/4AAQSkZ..." } 
+        }
+      ]
+    }
+  ],
+  onProgress: (_c, t) => console.log(t)
+});
+```
+
+## Generating Embeddings with embed()
+
+The `embed()` method generates vector embeddings for text, useful for semantic search and similarity comparisons.
+
+### Basic Embedding
+
+```typescript
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: "What is the capital of Great Britain?",
+});
+
+// embeddings is an array of number arrays
+console.log(embeddings); // [[0.1, 0.2, 0.3, ...]]
+```
+
+### Multiple Inputs
+
+Embed multiple text strings at once:
+
+```typescript
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: [
+    "Text 1",
+    "Text 2",
+    "Text 3",
+    "Text 4"
+  ],
+  onProgress: (processedChunks) => {
+    console.log(`Processing: ${processedChunks.length} chunks processed`);
+    console.log('Latest processed chunks:', processedChunks);
+  }
+});
+```
+
+### Real Example: Embedding File Content
+
+From the example plugin, here's how to embed file content:
+
+```typescript
+import { TFile } from 'obsidian';
+
+// Get file from vault
+const file = this.app.vault.getAbstractFileByPath('path/to/file.md');
+if (!(file instanceof TFile)) {
+  throw new Error('File not found');
+}
+
+const content = await this.app.vault.read(file);
+
+console.log(`File: ${file.name} (${content.length} characters)`);
+
+// Generate embeddings
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: content,
+});
+
+console.log(`Generated ${embeddings.length} embedding vector(s)`);
+console.log(`Vector dimension: ${embeddings[0]?.length || 0}`);
+console.log(`First 5 values: [${embeddings[0]
+  ?.slice(0, 5)
+  .map(v => v.toFixed(4))
+  .join(', ')}...]`);
+```
+
+## RAG: Semantic Search with retrieve()
+
+The `retrieve()` method performs semantic search to find relevant text chunks from documents. This is essential for implementing RAG (Retrieval-Augmented Generation).
+
+### Basic Semantic Search
+
+```typescript
+// Simple example with predefined documents
+const documents = [
+  {
+    content: "London is the capital city of England and the United Kingdom. It is located on the River Thames.",
+    meta: { source: "geography.txt", category: "cities" }
+  },
+  {
+    content: "Paris is the capital and most populous city of France. It is situated on the Seine River.",
+    meta: { source: "geography.txt", category: "cities" }
+  }
+];
+
+const results = await aiProviders.retrieve({
+  query: "What is the capital of England?",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0]
+});
+
+// Results are sorted by relevance score (highest first)
+results.forEach(result => {
+  console.log(`Score: ${result.score}`);
+  console.log(`Content: ${result.content}`);
+  console.log(`Meta: ${JSON.stringify(result.document.meta)}`);
+});
+```
+
+### Searching Obsidian Vault
+
+Search across your Obsidian vault files:
+
+```typescript
+// Reading documents from Obsidian vault
+const markdownFiles = this.app.vault.getMarkdownFiles();
+const documents = [];
+
+// Read content from multiple files
+for (const file of markdownFiles.slice(0, 10)) { // Limit for demo
+  try {
+    const content = await this.app.vault.read(file);
+    if (content.trim()) {
+      documents.push({
+        content: content,
+        meta: {
+          filename: file.name,
+          path: file.path,
+          size: content.length,
+          modified: file.stat.mtime,
+        }
+      });
+    }
+  } catch (error) {
+    console.warn(`Failed to read ${file.path}:`, error);
+  }
+}
+
+// Perform semantic search with progress tracking
+const results = await aiProviders.retrieve({
+  query: "machine learning algorithms",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0],
+  onProgress: (progress) => {
+    const chunksPercentage = 
+      (progress.processedChunks.length / progress.totalChunks) * 100;
+    const docsPercentage = 
+      (progress.processedDocuments.length / progress.totalDocuments) * 100;
+    
+    console.log(`Chunks: ${progress.processedChunks.length}/${progress.totalChunks} (${chunksPercentage.toFixed(1)}%)`);
+    console.log(`Documents: ${progress.processedDocuments.length}/${progress.totalDocuments} (${docsPercentage.toFixed(1)}%)`);
+  }
+});
+
+// Results are sorted by relevance score (highest first)
+results.forEach(result => {
+  console.log(`Score: ${result.score}`);
+  console.log(`File: ${result.document.meta?.filename}`);
+  console.log(`Content preview: ${result.content.substring(0, 100)}...`);
+  console.log(`Path: ${result.document.meta?.path}`);
+});
+
+/*
+Output example:
+Score: 0.92
+File: ML-Notes.md
+Content preview: Machine learning algorithms can be categorized into supervised, unsupervised, and reinforcement...
+Path: Notes/ML-Notes.md
+
+Score: 0.78
+File: AI-Research.md
+Content preview: Recent advances in neural networks have shown promising results in various applications...
+Path: Research/AI-Research.md
+*/
+```
+
+### Working with Large Documents
+
+The `retrieve()` method automatically chunks large documents for better search accuracy:
+
+```typescript
+const largeDocuments = [
+  {
+    content: `
+      Chapter 1: Introduction to Machine Learning
+      Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models.
+      
+      Chapter 2: Types of Machine Learning
+      There are three main types: supervised learning, unsupervised learning, and reinforcement learning.
+      
+      Chapter 3: Neural Networks
+      Neural networks are computing systems inspired by biological neural networks.
+    `,
+    meta: { title: "ML Textbook", chapter: "1-3" }
+  }
+];
+
+const mlResults = await aiProviders.retrieve({
+  query: "What are the types of machine learning?",
+  documents: largeDocuments,
+  embeddingProvider: aiProviders.providers[0]
+});
+
+// The method finds the most relevant chunk about ML types
+console.log(mlResults[0].content);
+// "There are three main types: supervised learning, unsupervised learning, and reinforcement learning."
+```
+
+<Note>
+The `retrieve()` method automatically splits large documents into smaller chunks (typically ~500 tokens) for more precise semantic matching.
+</Note>
+
+## Error Handling
+
+All SDK methods throw errors if something goes wrong. Always wrap calls in try-catch blocks:
+
+<Tabs>
+
+<Tab title="execute() Error Handling">
+
+```typescript
+try {
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "What is the capital of Great Britain?",
+    onProgress: (c, full) => { /* optional */ }
+  });
+} catch (error) {
+  console.error('Execution failed:', error);
+  // Error is also shown in Obsidian Notice UI
+}
+```
+
+</Tab>
+
+<Tab title="embed() Error Handling">
+
+```typescript
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: "What is the capital of Great Britain?",
+  });
+} catch (error) {
+  console.error('Embedding failed:', error);
+  // Error is also shown in Obsidian Notice UI
+}
+```
+
+</Tab>
+
+<Tab title="retrieve() Error Handling">
+
+```typescript
+try {
+  const results = await aiProviders.retrieve({
+    query: "search query",
+    documents: documents,
+    embeddingProvider: aiProviders.providers[0]
+  });
+} catch (error) {
+  console.error('Retrieval failed:', error);
+  // Handle provider issues, invalid documents, etc.
+}
+```
+
+</Tab>
+
+</Tabs>
+
+<Warning>
+Most SDK methods automatically show error notices in the Obsidian UI. You should still handle errors in your code for proper cleanup and user feedback.
+</Warning>
+
+## Complete Working Example
+
+Here's a complete settings tab that demonstrates all three methods:
+
+```typescript
+import { App, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { initAI, waitForAI } from '@obsidian-ai-providers/sdk';
+
+export default class MyPlugin extends Plugin {
+  async onload() {
+    initAI(this.app, this, async () => {
+      this.addSettingTab(new MySettingTab(this.app, this));
+    });
+  }
+}
+
+class MySettingTab extends PluginSettingTab {
+  plugin: MyPlugin;
+  selectedProvider: string;
+
+  constructor(app: App, plugin: MyPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  async display(): Promise<void> {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    const aiResolver = await waitForAI();
+    const aiProviders = await aiResolver.promise;
+
+    if (aiProviders.providers.length === 0) {
+      containerEl.createEl('p', {
+        text: 'No AI providers found. Please configure one first.'
+      });
+      return;
+    }
+
+    const provider = aiProviders.providers[0];
+
+    // Execute example
+    new Setting(containerEl)
+      .setName('Test text generation')
+      .addButton(button =>
+        button.setButtonText('Generate').onClick(async () => {
+          button.setDisabled(true);
+          const resultEl = containerEl.createEl('p');
+          
+          try {
+            await aiProviders.execute({
+              provider,
+              prompt: 'What is the capital of Great Britain?',
+              onProgress: (_chunk, text) => {
+                resultEl.setText(text);
+              },
+            });
+          } catch (error) {
+            resultEl.setText((error as Error).message);
+          } finally {
+            button.setDisabled(false);
+          }
+        })
+      );
+  }
+}
+```
+
+## Next Steps
+
+- Explore [Provider Types](/providers/ollama) to understand different AI providers
+- Learn about [Advanced Features](/sdk/advanced/migration-guide) for more complex use cases
+- Check the [API Reference](/sdk/api/execute) for complete type definitions

@@ -1,0 +1,177 @@
+---
+title: Anthropic (Claude)
+description: Set up Anthropic Claude as your AI provider in Obsidian AI Providers
+---
+
+Anthropic provides the Claude family of AI models, known for their long context windows, strong reasoning capabilities, and helpful, harmless, and honest approach to AI interactions.
+
+## Overview
+
+- **Type**: Cloud provider
+- **Cost**: Pay-per-use (see [pricing](https://www.anthropic.com/pricing))
+- **API Key Required**: Yes
+- **Installation Required**: No
+- **Official Website**: [https://www.anthropic.com/](https://www.anthropic.com/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create an Anthropic account">
+    Sign up at [console.anthropic.com](https://console.anthropic.com/) if you don't have an account yet.
+  </Step>
+  
+  <Step title="Add billing information">
+    Navigate to your billing settings and add a payment method. You'll need credits to use the API.
+  </Step>
+  
+  <Step title="Generate an API key">
+    Go to [API Keys](https://console.anthropic.com/settings/keys) and create a new key. Copy it immediately - you won't be able to see it again!
+  </Step>
+</Steps>
+
+<Warning>
+Keep your API key secure and never share it publicly or commit it to version control.
+</Warning>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select Anthropic provider">
+    In the AI Providers settings, click **Create AI provider** and select `Anthropic` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    https://api.anthropic.com
+    ```
+    
+    (This is usually the default, but verify it's set correctly)
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the [API Keys page](https://console.anthropic.com/settings/keys) into the `API key` field.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch available models, then select your preferred Claude model (e.g., `claude-3-7-sonnet-20250219`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify your setup is working correctly.
+  </Step>
+</Steps>
+
+## Recommended Models
+
+| Model | Context Window | Description | Best For |
+|-------|----------------|-------------|----------|
+| `claude-3-7-sonnet-20250219` | 200K tokens | Latest Sonnet, balanced performance | Most tasks, great value |
+| `claude-opus-4-20250514` | 200K tokens | Highest intelligence | Complex analysis, research |
+| `claude-3-5-haiku-20241022` | 200K tokens | Fastest, most affordable | Simple tasks, high volume |
+| `claude-3-opus-20240229` | 200K tokens | Previous generation flagship | Still excellent for complex work |
+
+<Note>
+All Claude 3+ models support vision capabilities, allowing you to analyze images in your prompts.
+</Note>
+
+## Key Features
+
+### Extended Context Windows
+
+Claude models support up to 200,000 tokens of context, allowing you to:
+- Process entire books or codebases
+- Maintain long conversations
+- Analyze large documents
+
+### Vision Capabilities
+
+All Claude 3+ models can analyze images. Supported formats:
+- JPEG
+- PNG
+- GIF
+- WebP
+
+<Warning>
+Images must be provided as base64-encoded data URLs. Regular URLs to images are not supported.
+</Warning>
+
+### System Prompts
+
+Claude fully supports system prompts, which are useful for:
+- Setting the AI's role or persona
+- Providing context and instructions
+- Defining output format requirements
+
+## Troubleshooting
+
+### Embeddings Not Supported
+
+Anthropic does not provide embedding models. If you need embeddings for RAG or semantic search:
+- Use OpenAI's `text-embedding-3-small` or `text-embedding-3-large`
+- Use an Ollama model with embedding support
+- Use another provider that offers embeddings
+
+### Rate Limit Errors
+
+If you encounter rate limits:
+1. Check your [workspace limits](https://console.anthropic.com/settings/limits)
+2. Consider upgrading your account tier
+3. Implement request throttling in your applications
+
+### Image Format Errors
+
+If images aren't working:
+1. Ensure images are base64-encoded with proper data URL format: `data:image/jpeg;base64,...`
+2. Verify the image format is supported (JPEG, PNG, GIF, or WebP)
+3. Check that the base64 data is valid
+
+### Model Not Found
+
+<Note>
+Some newer models may require specific API access. Check the [Anthropic documentation](https://docs.anthropic.com/en/docs/models-overview) for model availability.
+</Note>
+
+## Pricing Considerations
+
+Anthropic charges based on tokens:
+- Input tokens (prompt)
+- Output tokens (completion)
+
+**Cost-saving tips:**
+- Use Claude 3.5 Haiku for simple, high-volume tasks
+- Use Claude 3.7 Sonnet for most work (best balance)
+- Reserve Opus for tasks requiring highest quality
+- Monitor usage in your [console](https://console.anthropic.com/)
+
+## Advanced Configuration
+
+### Max Tokens
+
+Claude requires a `max_tokens` parameter (default: 1024 in AI Providers). You can adjust this in API calls:
+- Higher values allow longer responses
+- Lower values reduce costs
+- Maximum varies by model (typically 4096-8192)
+
+### Temperature and Top P
+
+Control response randomness:
+- `temperature` (0.0-1.0) - Higher = more creative
+- `top_p` (0.0-1.0) - Nucleus sampling parameter
+
+### Stop Sequences
+
+Define custom stop sequences to control where generation ends:
+```typescript
+options: {
+  stop: ["\n\nHuman:", "\n\nAssistant:"]
+}
+```
+
+## Best Practices
+
+1. **Use the right model**: Haiku for speed, Sonnet for balance, Opus for quality
+2. **Leverage the context window**: Claude can handle very long inputs efficiently
+3. **Be specific in prompts**: Claude responds well to clear, detailed instructions
+4. **Use system prompts**: Set context and constraints upfront
+5. **Monitor costs**: Use the console dashboard to track spending

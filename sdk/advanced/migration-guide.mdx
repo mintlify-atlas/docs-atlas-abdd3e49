@@ -1,0 +1,190 @@
+---
+title: Migration Guide
+description: Guide for migrating from older SDK versions, including the execute() streaming API changes
+---
+
+## SDK 1.5.0: execute() Streaming Change
+
+<Warning>
+  SDK 1.5.0 (Service API v3) introduces breaking changes to the `execute()` method. The chainable `IChunkHandler` pattern is deprecated.
+</Warning>
+
+Introduced in **@obsidian-ai-providers/sdk 1.5.0** with service API version **3**. Earlier versions returned an `IChunkHandler` unconditionally. From 1.5.0 (API v3) the default return value is a `Promise<string>`; the legacy handler is only produced when no streaming / abort params are provided (deprecated path).
+
+### What Changed
+
+**Old pattern (before 1.5.0):**
+- Call `execute()` → receive `IChunkHandler` object
+- Register `onData`, `onEnd`, `onError` callbacks
+- Call `abort()` on handler to cancel
+
+**New pattern (1.5.0+):**
+- Call `execute()` → receive `Promise<string>`
+- Pass `onProgress` for partial chunks
+- Use `AbortController` (`abortController.abort()`) to cancel
+- Use `await` / `.then()` for completion, `try/catch` / `.catch()` for errors
+
+<Note>
+  `IChunkHandler` is deprecated and only returned if you call `execute()` without `onProgress` and without `abortController`. Migrate soon; the compatibility branch will be removed in a future major version.
+</Note>
+
+### Translation Table
+
+| Old | New |
+|-----|-----|
+| `handler.onData(cb)` | `onProgress: (chunk, full) => {}` |
+| `handler.onEnd(cb)` | Promise resolve (`await`) |
+| `handler.onError(cb)` | Promise reject (`try/catch`) |
+| `handler.abort()` | `abortController.abort()` |
+
+## Migration Examples
+
+### 1. Basic Replacement
+
+**Before:**
+```typescript
+const handler = await aiProviders.execute({ 
+  provider, 
+  prompt: "Explain quantum tunneling" 
+});
+handler.onData((chunk, full) => console.log(full));
+handler.onEnd(full => console.log('DONE:', full));
+handler.onError(err => console.error(err));
+```
+
+**After:**
+```typescript
+const full = await aiProviders.execute({
+  provider,
+  prompt: "Explain quantum tunneling",
+  onProgress: (_chunk, accumulated) => console.log(accumulated)
+});
+console.log('DONE:', full);
+```
+
+### 2. Error Handling
+
+**Before:**
+```typescript
+const handler = await aiProviders.execute({ provider, prompt: "Test" });
+handler.onError(err => console.error(err));
+```
+
+**After:**
+```typescript
+try {
+  await aiProviders.execute({ provider, prompt: "Test" });
+} catch (err) {
+  console.error(err);
+}
+```
+
+### 3. Cancellation / Abort
+
+**Before:**
+```typescript
+const handler = await aiProviders.execute({ 
+  provider, 
+  prompt: "Stream long text" 
+});
+handler.onData((_c, full) => { 
+  if (full.length > 200) handler.abort(); 
+});
+```
+
+**After:**
+```typescript
+const abortController = new AbortController();
+try {
+  await aiProviders.execute({
+    provider,
+    prompt: "Stream long text",
+    abortController,
+    onProgress: (_c, full) => { 
+      if (full.length > 200) abortController.abort(); 
+    }
+  });
+} catch (e) {
+  if ((e as Error).message === 'Aborted') {
+    console.log('Aborted intentionally');
+  } else {
+    console.error(e);
+  }
+}
+```
+
+### 4. Chat Messages
+
+**Before:**
+```typescript
+const handler = await aiProviders.execute({
+  provider,
+  messages: [
+    { role: 'system', content: 'You are concise.' },
+    { role: 'user', content: 'Summarize gravity.' }
+  ]
+});
+handler.onData((_c, full) => render(full));
+```
+
+**After:**
+```typescript
+const final = await aiProviders.execute({
+  provider,
+  messages: [
+    { role: 'system', content: 'You are concise.' },
+    { role: 'user', content: 'Summarize gravity.' }
+  ],
+  onProgress: (_c, full) => render(full)
+});
+```
+
+### 5. Non-Streaming Simplicity
+
+**Before (needed onEnd to get final text):**
+```typescript
+const handler = await aiProviders.execute({ provider, prompt: 'Plain request' });
+handler.onEnd(full => use(full));
+```
+
+**After:**
+```typescript
+const full = await aiProviders.execute({ provider, prompt: 'Plain request' });
+use(full);
+```
+
+## Incremental Migration Steps
+
+1. Convert each `onEnd` usage to `await` the returned promise
+2. Wrap in `try/catch` instead of `onError`
+3. Inline each `onData` callback as `onProgress` parameter
+4. Replace `handler.abort()` with an `AbortController` passed in params
+5. Remove `IChunkHandler` type references/imports
+
+## Finding Legacy Code
+
+Search for these tokens in your codebase:
+- `onData(`
+- `onEnd(`
+- `onError(`
+- `abort()` (on handler instances)
+
+Each match needs updating to the new pattern.
+
+## Summary
+
+```typescript
+await aiProviders.execute({ 
+  provider, 
+  prompt, 
+  onProgress, 
+  abortController 
+});
+```
+
+- **Final text:** promise result
+- **Streaming:** `onProgress`
+- **Cancel:** `abortController.abort()`
+- **Abort error text:** exactly `"Aborted"`
+
+You are migrated once no code depends on `onData/onEnd/onError` or `handler.abort()`.

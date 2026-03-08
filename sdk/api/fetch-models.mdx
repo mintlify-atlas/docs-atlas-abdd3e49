@@ -1,0 +1,208 @@
+---
+title: fetchModels()
+description: Fetch available models from an AI provider
+---
+
+Fetch the list of available models from an AI provider and update the provider's `availableModels` property.
+
+## Method Signature
+
+```typescript
+// Recommended: object parameter
+fetchModels(params: { provider: IAIProvider; abortController?: AbortController }): Promise<string[]>
+
+// Legacy: direct provider parameter (deprecated)
+fetchModels(provider: IAIProvider): Promise<string[]>
+```
+
+## Parameters
+
+<ParamField path="provider" type="IAIProvider" required>
+  The AI provider to fetch models from. The provider must support the models API endpoint.
+  
+  ```typescript
+  provider: aiProviders.providers[0]
+  ```
+</ParamField>
+
+<ParamField path="abortController" type="AbortController">
+  Optional AbortController to cancel the fetch operation.
+  
+  ```typescript
+  abortController: new AbortController()
+  ```
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<string[]>" type="string[]">
+  A promise that resolves to an array of available model names.
+  
+  ```typescript
+  ['gpt-4', 'gpt-3.5-turbo', 'text-embedding-ada-002']
+  ```
+  
+  The method also automatically updates `provider.availableModels` with the fetched list.
+</ResponseField>
+
+## Examples
+
+### Basic Usage
+
+```typescript
+// Fetch models and update provider
+const models = await aiProviders.fetchModels({
+  provider: aiProviders.providers[0]
+});
+
+console.log('Available models:', models);
+// ['smollm2:135m', 'llama2:latest', 'mistral:latest']
+
+// The provider object is automatically updated
+console.log(aiProviders.providers[0].availableModels);
+// ['smollm2:135m', 'llama2:latest', 'mistral:latest']
+```
+
+### Legacy Usage (Deprecated)
+
+```typescript
+// Old way: passing provider directly
+const models = await aiProviders.fetchModels(
+  aiProviders.providers[0]
+);
+
+console.log(models);
+```
+
+### With AbortController
+
+```typescript
+const controller = new AbortController();
+
+// Set a timeout to cancel the request
+setTimeout(() => controller.abort(), 5000);
+
+try {
+  const models = await aiProviders.fetchModels({
+    provider: aiProviders.providers[0],
+    abortController: controller
+  });
+  
+  console.log('Fetched models:', models);
+} catch (error) {
+  if ((error as Error).message === 'Aborted') {
+    console.log('Model fetch cancelled');
+  } else {
+    console.error('Failed to fetch models:', error);
+  }
+}
+```
+
+### Fetching for Multiple Providers
+
+```typescript
+// Fetch models for all providers in parallel
+const modelPromises = aiProviders.providers.map(provider =>
+  aiProviders.fetchModels({ provider })
+);
+
+const allModels = await Promise.all(modelPromises);
+
+aiProviders.providers.forEach((provider, index) => {
+  console.log(`${provider.name}:`, allModels[index]);
+});
+```
+
+### Using Fetched Models in UI
+
+```typescript
+// Fetch models when user opens settings
+async function loadModelsList() {
+  try {
+    const models = await aiProviders.fetchModels({
+      provider: aiProviders.providers[0]
+    });
+    
+    // Populate dropdown with available models
+    const dropdown = document.getElementById('model-select');
+    models.forEach(model => {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      dropdown.appendChild(option);
+    });
+  } catch (error) {
+    console.error('Could not load models:', error);
+  }
+}
+```
+
+### Checking Model Availability
+
+```typescript
+// Check if a specific model is available
+const models = await aiProviders.fetchModels({
+  provider: aiProviders.providers[0]
+});
+
+const hasGPT4 = models.includes('gpt-4');
+if (hasGPT4) {
+  console.log('GPT-4 is available');
+} else {
+  console.log('GPT-4 not found, using fallback');
+}
+```
+
+## Automatic Updates
+
+<Info>
+  When `fetchModels()` is called, it automatically updates the `provider.availableModels` property. This means you can access the models list directly from the provider object after fetching:
+  
+  ```typescript
+  await aiProviders.fetchModels({ provider });
+  
+  // Models are now available on the provider
+  console.log(provider.availableModels);
+  ```
+</Info>
+
+## When to Use
+
+<Note>
+  **You typically don't need to call this method manually.** The AI Providers plugin automatically fetches models when needed.
+  
+  However, `fetchModels()` is useful when:
+  - Building custom provider selection UI
+  - Validating that a specific model is available
+  - Refreshing the model list after provider changes
+  - Implementing model discovery features
+</Note>
+
+## Error Handling
+
+```typescript
+try {
+  const models = await aiProviders.fetchModels({
+    provider: aiProviders.providers[0]
+  });
+  
+  if (models.length === 0) {
+    console.warn('No models available from provider');
+  }
+} catch (error) {
+  console.error('Failed to fetch models:', error);
+  // Handle error (e.g., network failure, invalid API key)
+}
+```
+
+## Provider Support
+
+<Warning>
+  Not all provider types support the models API. If a provider doesn't support model fetching, the method will throw an error:
+  
+  ```
+  Handler not found or does not support fetchModels for provider type: {type}
+  ```
+  
+  Make sure the provider type supports model listing before calling this method.
+</Warning>

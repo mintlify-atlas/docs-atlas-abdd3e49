@@ -1,0 +1,298 @@
+---
+title: Overview
+description: Understanding the AI Providers plugin settings interface and how providers are managed
+---
+
+## What is AI Providers?
+
+Obsidian AI Providers is a **configuration hub** for managing AI service connections in Obsidian. It acts as a centralized control panel where you can:
+
+- Store API keys and settings for multiple AI services
+- Share these configurations with other Obsidian plugins
+- Avoid entering the same AI settings repeatedly across different plugins
+
+<Warning>
+  **Important:** This plugin does not perform AI processing itself. It only manages configurations that other plugins use to connect to AI services.
+</Warning>
+
+## The Settings Interface
+
+The plugin provides a dedicated settings tab in Obsidian where you can manage all your AI provider configurations. The interface is organized into three main sections:
+
+### 1. Configured Providers
+
+This section displays all your saved AI providers in a list format. Each provider entry shows:
+
+- **Provider icon and name** - Visual identifier for quick recognition
+- **URL** - The API endpoint being used
+- **Model pill** - Currently selected model (if configured)
+- **Action buttons** - Options to edit, duplicate, or delete the provider
+
+```typescript
+// Provider display structure from settings.ts:194-214
+providers.forEach((provider: IAIProvider) => {
+    const setting = new Setting(mainInterface)
+        .setName(provider.name)
+        .setDesc(provider.url || '');
+
+    // Add provider icon before the name
+    const iconEl = setting.nameEl.createSpan('ai-providers-provider-icon');
+    setIcon(iconEl, `ai-providers-${provider.type}`);
+    
+    // Add model pill if model is selected
+    if (provider.model) {
+        const modelPill = setting.settingEl.createDiv('ai-providers-model-pill');
+        modelPill.textContent = provider.model;
+    }
+});
+```
+
+### 2. Developer Settings
+
+Advanced options for debugging and customization:
+
+- **Debug Logging** - Enable verbose logging for troubleshooting
+- **Use Native Fetch** - Toggle between Obsidian's request API and native fetch
+
+### 3. Add Provider Button
+
+A prominent **+** button at the top allows you to quickly add new AI providers.
+
+## How Providers Are Stored
+
+Providers are stored in the plugin's settings file as a JSON array. Each provider configuration is persisted to disk and loaded when Obsidian starts.
+
+```typescript
+// Default settings structure from settings.ts:19-23
+export const DEFAULT_SETTINGS: IAIProvidersPluginSettings = {
+    _version: 1,
+    debugLogging: false,
+    useNativeFetch: false,
+};
+```
+
+The `providers` array is added to these default settings:
+
+```typescript
+interface IAIProvidersPluginSettings {
+    providers?: IAIProvider[];
+    _version: number;
+    debugLogging?: boolean;
+    useNativeFetch?: boolean;
+}
+```
+
+## Provider Configuration Fields
+
+Each AI provider requires specific configuration fields to function properly:
+
+<CardGroup cols={2}>
+  <Card title="id" icon="fingerprint">
+    Unique identifier generated automatically using timestamp
+    ```typescript
+    id: `id-${Date.now().toString()}`
+    ```
+  </Card>
+  
+  <Card title="name" icon="tag">
+    Human-readable name for the provider (must be unique)
+  </Card>
+  
+  <Card title="type" icon="shapes">
+    Provider type from supported list (openai, anthropic, ollama, etc.)
+  </Card>
+  
+  <Card title="url" icon="link">
+    API endpoint URL (defaults provided per provider type)
+  </Card>
+  
+  <Card title="apiKey" icon="key">
+    API authentication key (optional for local providers)
+  </Card>
+  
+  <Card title="model" icon="cpu">
+    Selected model name (e.g., "gpt-4o", "claude-3.7-sonnet")
+  </Card>
+</CardGroup>
+
+### Complete Provider Interface
+
+```typescript
+// From packages/sdk/types.d.ts:28-36
+export interface IAIProvider {
+    id: string;
+    name: string;
+    apiKey?: string;
+    url?: string;
+    type: AIProviderType;
+    model?: string;
+    availableModels?: string[];
+}
+```
+
+### Supported Provider Types
+
+The plugin supports 19 different provider types:
+
+```typescript
+export type AIProviderType =
+    | 'openai'
+    | 'anthropic'
+    | 'gemini'
+    | 'openrouter'
+    | 'ollama'
+    | 'ollama-openwebui'
+    | 'lmstudio'
+    | 'groq'
+    | 'mistral'
+    | 'together'
+    | 'fireworks'
+    | 'perplexity'
+    | 'deepseek'
+    | 'xai'
+    | 'cerebras'
+    | 'zai'
+    | 'ai302'
+    | 'novita'
+    | 'deepinfra'
+    | 'sambanova';
+```
+
+## How Other Plugins Access Providers
+
+AI Providers exposes a global service through Obsidian's app object that other plugins can use:
+
+```typescript
+// From packages/sdk/types.d.ts:179-189
+export interface ExtendedApp extends App {
+    aiProviders?: IAIProvidersService;
+}
+```
+
+### The AIProvidersService API
+
+Other plugins interact with your configured providers through the `IAIProvidersService` interface:
+
+```typescript
+export interface IAIProvidersService {
+    version: number;
+    providers: IAIProvider[];
+    
+    // Fetch available models for a provider
+    fetchModels(params: { provider: IAIProvider; abortController?: AbortController }): Promise<string[]>;
+    
+    // Execute text generation
+    execute(params: IAIProvidersExecuteParams): Promise<string>;
+    
+    // Generate embeddings
+    embed(params: IAIProvidersEmbedParams): Promise<number[][]>;
+    
+    // Check version compatibility
+    checkCompatibility(requiredVersion: number): void;
+    
+    // RAG retrieval
+    retrieve(params: IAIProvidersRetrievalParams): Promise<IAIProvidersRetrievalResult[]>;
+}
+```
+
+<Accordion title="Example: How a plugin uses AI Providers">
+  ```typescript
+  // Wait for AI Providers to be ready
+  const { promise } = await waitForAIProviders(this.app, this);
+  const aiProviders = await promise;
+  
+  // Access configured providers
+  const provider = aiProviders.providers[0];
+  
+  // Execute text generation with streaming
+  try {
+      const finalText = await aiProviders.execute({
+          provider,
+          prompt: "Summarize this note",
+          onProgress: (chunk, full) => {
+              // Update UI with streaming chunks
+              console.log(full);
+          },
+          abortController: new AbortController()
+      });
+      // Use the final text
+  } catch (e) {
+      // Handle error or abort
+  }
+  ```
+</Accordion>
+
+## Provider Validation
+
+The plugin validates provider configurations to ensure data integrity:
+
+```typescript
+// From settings.ts:68-96
+private validateProvider(provider: IAIProvider): {
+    isValid: boolean;
+    error?: string;
+} {
+    // Validate provider name
+    if (!provider.name || provider.name.trim() === '') {
+        return {
+            isValid: false,
+            error: I18n.t('errors.providerNameRequired'),
+        };
+    }
+
+    // Check for duplicate names
+    const providers = this.plugin.settings.providers || [];
+    const existingProvider = providers.find(
+        (p: IAIProvider) =>
+            p.name.trim() === provider.name.trim() && p.id !== provider.id
+    );
+    if (existingProvider) {
+        return {
+            isValid: false,
+            error: I18n.t('errors.providerNameExists', {
+                name: provider.name,
+            }),
+        };
+    }
+
+    return { isValid: true };
+}
+```
+
+<Note>
+  Provider names must be unique and non-empty. The validation runs automatically when saving a provider configuration.
+</Note>
+
+## Configuration Persistence
+
+When you save a provider, it's either added to the array (new provider) or updated in place (existing provider):
+
+```typescript
+// From settings.ts:98-121
+async saveProvider(provider: IAIProvider) {
+    const validation = this.validateProvider(provider);
+    if (!validation.isValid) {
+        if (validation.error) {
+            new Notice(validation.error);
+        }
+        return;
+    }
+
+    const providers = this.plugin.settings.providers || [];
+    const existingIndex = providers.findIndex(
+        (p: IAIProvider) => p.id === provider.id
+    );
+
+    if (existingIndex !== -1) {
+        providers[existingIndex] = provider;
+    } else {
+        providers.push(provider);
+    }
+
+    this.plugin.settings.providers = providers;
+    await this.plugin.saveSettings();
+    this.closeForm();
+}
+```
+
+The settings are automatically saved to Obsidian's data directory and synced across devices if you use Obsidian Sync.

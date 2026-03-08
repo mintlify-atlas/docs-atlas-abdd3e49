@@ -1,0 +1,281 @@
+---
+title: execute()
+description: Execute text generation with streaming support and cancellation
+---
+
+Execute text generation with AI providers. Returns a promise that resolves to the final generated text.
+
+## Method Signature
+
+```typescript
+execute(
+  params: IAIProvidersExecuteParams & 
+    ({ onProgress?: (chunk: string, accumulatedText: string) => void } | 
+     { abortController?: AbortController })
+): Promise<string>
+
+// Legacy usage (deprecated)
+execute(
+  params: IAIProvidersExecuteParams & 
+    { onProgress?: undefined; abortController?: undefined }
+): Promise<IChunkHandler>
+```
+
+## Parameters
+
+<ParamField path="provider" type="IAIProvider" required>
+  The AI provider to use for text generation. Must be from `aiProviders.providers` array.
+</ParamField>
+
+<ParamField path="prompt" type="string">
+  Simple text prompt for generation. Use either `prompt` or `messages`, not both.
+  
+  ```typescript
+  prompt: "What is the capital of Great Britain?"
+  ```
+</ParamField>
+
+<ParamField path="messages" type="IChatMessage[]">
+  Array of chat messages with roles. Use either `messages` or `prompt`, not both.
+  
+  ```typescript
+  messages: [
+    { role: "system", content: "You are a helpful assistant." },
+    { role: "user", content: "What is the capital of Great Britain?" }
+  ]
+  ```
+  
+  <Expandable title="Message format with images">
+    Messages can include images using content blocks:
+    
+    ```typescript
+    messages: [
+      { role: "system", content: "You are a helpful image analyst." },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Describe what you see in this image" },
+          { 
+            type: "image_url", 
+            image_url: { url: "data:image/jpeg;base64,/9j/4AAQSkZ..." } 
+          }
+        ]
+      }
+    ]
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="systemPrompt" type="string">
+  System prompt when using simple `prompt` format. Ignored if `messages` is provided.
+  
+  ```typescript
+  systemPrompt: "You are a helpful geography assistant."
+  ```
+</ParamField>
+
+<ParamField path="images" type="string[]">
+  Array of image URLs or base64-encoded images (legacy format).
+</ParamField>
+
+<ParamField path="options" type="object">
+  Additional generation options to pass to the provider.
+  
+  <Expandable title="Available options">
+    <ParamField path="options.temperature" type="number">
+      Controls randomness (0.0 to 2.0). Lower values are more deterministic.
+    </ParamField>
+    
+    <ParamField path="options.max_tokens" type="number">
+      Maximum number of tokens to generate.
+    </ParamField>
+    
+    <ParamField path="options.top_p" type="number">
+      Nucleus sampling parameter (0.0 to 1.0).
+    </ParamField>
+    
+    <ParamField path="options.frequency_penalty" type="number">
+      Penalize frequent tokens (-2.0 to 2.0).
+    </ParamField>
+    
+    <ParamField path="options.presence_penalty" type="number">
+      Penalize repeated tokens (-2.0 to 2.0).
+    </ParamField>
+    
+    <ParamField path="options.stop" type="string[]">
+      Stop sequences that halt generation.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="onProgress" type="(chunk: string, accumulatedText: string) => void">
+  Optional streaming callback that fires for each generated chunk.
+  
+  - `chunk`: The new text fragment received
+  - `accumulatedText`: All text generated so far
+  
+  ```typescript
+  onProgress: (chunk, accumulatedText) => {
+    console.log('Chunk:', chunk);
+    console.log('Total:', accumulatedText);
+  }
+  ```
+</ParamField>
+
+<ParamField path="abortController" type="AbortController">
+  Optional AbortController to cancel the generation.
+  
+  Calling `abort()` will reject the promise with `Error('Aborted')`.
+  
+  ```typescript
+  const controller = new AbortController();
+  abortController: controller
+  ```
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<string>" type="string">
+  When `onProgress` or `abortController` is provided, returns a promise that resolves to the complete generated text.
+  
+  - Success: Promise resolves with the full text
+  - Failure/abort: Promise rejects with an error
+</ResponseField>
+
+<ResponseField name="Promise<IChunkHandler>" type="IChunkHandler" deprecated>
+  Legacy return type when neither `onProgress` nor `abortController` is provided. Use the promise-based API instead.
+</ResponseField>
+
+## Examples
+
+### Basic Text Generation
+
+```typescript
+const fullText = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  prompt: "What is the capital of Great Britain?"
+});
+
+console.log('Generated:', fullText);
+```
+
+### Streaming with Progress Callback
+
+```typescript
+const fullText = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  prompt: "What is the capital of Great Britain?",
+  onProgress: (chunk, accumulatedText) => {
+    console.log('Current text:', accumulatedText);
+  }
+});
+
+console.log('Final result:', fullText);
+```
+
+### Using Messages Format
+
+```typescript
+const response = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  messages: [
+    { role: "system", content: "You are a helpful geography assistant." },
+    { role: "user", content: "What is the capital of Great Britain?" }
+  ],
+  onProgress: (_chunk, text) => console.log(text)
+});
+```
+
+### Image Analysis
+
+```typescript
+const analysis = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  messages: [
+    { role: "system", content: "You are a helpful image analyst." },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Describe what you see in this image" },
+        { 
+          type: "image_url", 
+          image_url: { url: "data:image/jpeg;base64,/9j/4AAQSkZ..." } 
+        }
+      ]
+    }
+  ],
+  onProgress: (_c, t) => console.log(t)
+});
+```
+
+### Cancellation with AbortController
+
+```typescript
+const abortController = new AbortController();
+
+try {
+  const final = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Stream something...",
+    abortController,
+    onProgress: (_c, t) => {
+      console.log(t);
+      if (t.length > 50) {
+        abortController.abort();
+      }
+    }
+  });
+  console.log('Completed:', final);
+} catch (e) {
+  if ((e as Error).message === 'Aborted') {
+    console.log('Generation aborted intentionally');
+  } else {
+    console.error(e);
+  }
+}
+```
+
+### With Generation Options
+
+```typescript
+const response = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  prompt: "Write a creative story",
+  options: {
+    temperature: 0.8,
+    max_tokens: 500,
+    top_p: 0.9
+  },
+  onProgress: (chunk, full) => {
+    console.log(`Generated ${full.length} characters so far`);
+  }
+});
+```
+
+## Reasoning Chunks
+
+<Note>
+  Some OpenAI-compatible providers (e.g., OpenRouter) stream `delta.reasoning` chunks. These reasoning chunks are included in the text output wrapped in `<think>...</think>` tags.
+</Note>
+
+## Error Handling
+
+```typescript
+try {
+  await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "What is the capital of Great Britain?",
+    onProgress: (c, full) => {/* optional */}
+  });
+} catch (error) {
+  console.error('Generation failed:', error);
+}
+```
+
+## Migration Notes
+
+<Warning>
+  SDK 1.5.0 (Service API v3) changed `execute()` to return a `Promise<string>` with inline streaming via `onProgress` and cancellation via `AbortController`. The old chainable `IChunkHandler` object is deprecated and only returned when neither `onProgress` nor `abortController` are passed.
+  
+  See the [migration guide](../migrations/execute-streaming-migration) for details.
+</Warning>

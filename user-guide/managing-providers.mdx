@@ -1,0 +1,622 @@
+---
+title: Managing Providers
+description: Complete guide to adding, editing, deleting, and troubleshooting AI provider configurations
+---
+
+## Adding a New Provider
+
+Adding an AI provider involves configuring several fields to establish a connection to the AI service.
+
+### Step-by-Step Process
+
+<Steps>
+  <Step title="Open the Provider Form">
+    Click the **+** button in the Configured Providers section of the plugin settings.
+    
+    ```typescript
+    // From settings.ts:176-179
+    .addButton(button => {
+        const addButton = button
+            .setIcon('plus')
+            .setTooltip(I18n.t('settings.addProvider'))
+            .onClick(() => {
+                if (this.isFormOpen) return;
+                this.openForm(true);
+            });
+    });
+    ```
+  </Step>
+  
+  <Step title="Select Provider Type">
+    Choose your AI service from the dropdown. The plugin provides pre-configured defaults for each type:
+    
+    ```typescript
+    // Provider configurations from ProviderFormModal.ts:26-108
+    const PROVIDER_CONFIGS: Record<AIProviderType, ProviderConfig> = {
+        openai: {
+            url: 'https://api.openai.com/v1',
+            name: 'OpenAI',
+        },
+        anthropic: {
+            url: 'https://api.anthropic.com',
+            name: 'Anthropic',
+        },
+        ollama: {
+            url: 'http://localhost:11434',
+            name: 'Ollama',
+        },
+        gemini: {
+            url: 'https://generativelanguage.googleapis.com/v1beta/openai',
+            name: 'Google Gemini',
+        },
+        // ... and 15 more providers
+    };
+    ```
+    
+    When you select a type, the **Name** and **URL** fields automatically populate with sensible defaults.
+  </Step>
+  
+  <Step title="Configure Provider Name">
+    The name field is pre-filled based on the provider type, but you can customize it:
+    
+    - Must be unique across all providers
+    - Cannot be empty or whitespace-only
+    - Automatically trimmed when saved
+    
+    <Note>
+      Use descriptive names if you have multiple providers of the same type (e.g., "OpenAI GPT-4", "OpenAI GPT-3.5").
+    </Note>
+  </Step>
+  
+  <Step title="Set API Endpoint URL">
+    The URL field is auto-filled with the default endpoint for your provider type. You can modify it for:
+    
+    - Custom endpoints
+    - Self-hosted services
+    - Proxy servers
+    - Regional endpoints
+    
+    <Warning>
+      Local providers (like Ollama, LM Studio) use `localhost` URLs. Ensure the service is running before testing.
+    </Warning>
+  </Step>
+  
+  <Step title="Enter API Key">
+    Paste your API key from the provider's dashboard. The field has special behavior:
+    
+    ```typescript
+    // From ProviderFormModal.ts:545-551
+    text.inputEl.type = 'password';
+    text.inputEl.addEventListener('focus', () => {
+        text.inputEl.type = 'text';
+    });
+    text.inputEl.addEventListener('blur', () => {
+        text.inputEl.type = 'password';
+    });
+    ```
+    
+    - Displayed as password (hidden characters)
+    - Reveals text when focused
+    - Returns to hidden when unfocused
+    
+    <Note>
+      Local providers (Ollama, LM Studio) typically don't require an API key.
+    </Note>
+  </Step>
+  
+  <Step title="Select a Model">
+    The model field behavior depends on the provider type:
+    
+    **Providers with automatic model fetching:**
+    - Desktop: Searchable combobox with fuzzy search
+    - Mobile: Standard dropdown
+    
+    **Providers without model fetching (e.g., 302.AI):**
+    - Simple text input
+    - Manually enter the model name
+    
+    ```typescript
+    // From ProviderFormModal.ts:260-262
+    private hasModelFetching(type: AIProviderType): boolean {
+        const config = PROVIDER_CONFIGS[type];
+        return config.options?.modelsFetching !== false;
+    }
+    ```
+  </Step>
+  
+  <Step title="Save Configuration">
+    Click the **Save** button. The plugin will:
+    
+    1. Validate the provider name (non-empty and unique)
+    2. Add or update the provider in settings
+    3. Persist to disk
+    4. Close the form
+    
+    If validation fails, you'll see an error notice.
+  </Step>
+</Steps>
+
+### Smart Defaults Behavior
+
+The form intelligently manages field updates when you change the provider type:
+
+```typescript
+// From ProviderFormModal.ts:586-622
+private changeProviderType(newType: AIProviderType) {
+    const currentDefaultName = this.getDefaultName(this.provider.type);
+    const currentDefaultUrl = PROVIDER_CONFIGS[this.provider.type].url;
+
+    // Update provider properties
+    this.provider.type = newType;
+    this.provider.availableModels = undefined;
+    this.provider.model = undefined;
+
+    // Update URL only for new providers or if URL hasn't been manually modified
+    if (
+        this.isAddingNew &&
+        (!this.urlModified || this.provider.url === currentDefaultUrl)
+    ) {
+        this.provider.url = PROVIDER_CONFIGS[newType].url;
+        this.urlModified = false;
+    }
+
+    // Update name only for new providers or if name hasn't been manually modified
+    if (
+        this.isAddingNew &&
+        (!this.nameModified || this.provider.name === currentDefaultName)
+    ) {
+        this.provider.name = this.getDefaultName(newType);
+        this.nameModified = false;
+    }
+}
+```
+
+<Accordion title="Why do defaults change when switching provider type?">
+  The plugin tracks whether you've manually edited the **Name** and **URL** fields. If you haven't customized them, switching provider types updates them to match the new provider's defaults. This prevents accidentally using an OpenAI URL with an Anthropic provider, for example.
+</Accordion>
+
+## Editing Existing Providers
+
+You can modify any saved provider configuration:
+
+### Opening the Edit Form
+
+Click the **gear icon** next to the provider you want to edit:
+
+```typescript
+// From settings.ts:217-230
+.addExtraButton(button => {
+    button
+        .setIcon('gear')
+        .setTooltip(I18n.t('settings.options'))
+        .onClick(() => {
+            if (this.isFormOpen) return;
+            this.openForm(false, { ...provider });
+        });
+});
+```
+
+### Editing Process
+
+1. The form opens pre-filled with the current provider configuration
+2. Modify any fields as needed
+3. Click **Save** to persist changes
+4. Click **Cancel** to discard changes
+
+<Note>
+  When editing, the default smart behavior for name/URL updates is disabled. Only fields you manually change will be updated.
+</Note>
+
+## Deleting Providers
+
+Removing a provider requires confirmation to prevent accidental deletion:
+
+```typescript
+// From settings.ts:244-264
+.addExtraButton(button => {
+    button
+        .setIcon('lucide-trash-2')
+        .setTooltip(I18n.t('settings.delete'))
+        .onClick(async () => {
+            new ConfirmationModal(
+                this.app,
+                I18n.t('settings.deleteConfirmation', {
+                    name: provider.name,
+                }),
+                async () => {
+                    await this.deleteProvider(provider);
+                }
+            ).open();
+        });
+});
+```
+
+### Deletion Steps
+
+<Steps>
+  <Step title="Click the Trash Icon">
+    Click the red trash icon next to the provider.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    A confirmation modal appears displaying the provider name. Click to confirm.
+  </Step>
+  
+  <Step title="Provider Removed">
+    The provider is removed from settings and the list refreshes.
+    
+    ```typescript
+    // From settings.ts:123-134
+    async deleteProvider(provider: IAIProvider) {
+        const providers = this.plugin.settings.providers || [];
+        const index = providers.findIndex(
+            (p: IAIProvider) => p.id === provider.id
+        );
+        if (index !== -1) {
+            providers.splice(index, 1);
+            this.plugin.settings.providers = providers;
+            await this.plugin.saveSettings();
+            this.display();
+        }
+    }
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Deleting a provider removes it immediately. Other plugins using this provider will no longer have access to it.
+</Warning>
+
+## Duplicating Providers
+
+Quickly create a copy of an existing provider:
+
+```typescript
+// From settings.ts:136-149
+async duplicateProvider(provider: IAIProvider) {
+    const newProvider = {
+        ...provider,
+        id: `id-${Date.now().toString()}`,
+        name: `${provider.name} (${I18n.t('settings.duplicate')})`,
+    };
+
+    const providers = this.plugin.settings.providers || [];
+    providers.push(newProvider);
+
+    this.plugin.settings.providers = providers;
+    await this.plugin.saveSettings();
+    this.display();
+}
+```
+
+**Use cases:**
+- Testing different models with the same provider
+- Creating production and development configurations
+- Maintaining multiple API keys for the same service
+
+Click the **copy icon** next to any provider to duplicate it. The duplicate gets a new ID and "(Duplicate)" appended to its name.
+
+## Fetching Available Models
+
+For providers that support automatic model discovery, you can fetch the list of available models:
+
+### Desktop Experience (Combobox with Fuzzy Search)
+
+```typescript
+// From ProviderFormModal.ts:124-241
+class ModelSuggest extends AbstractInputSuggest<string> {
+    getSuggestions(query: string): string[] {
+        const trimmedQuery = query.trim();
+        
+        if (!trimmedQuery) {
+            return this.models.slice(0, this.limit);
+        }
+
+        if (trimmedQuery.length < this.minQueryLength) {
+            const lowerQuery = trimmedQuery.toLowerCase();
+            return this.models
+                .filter(model => model.toLowerCase().includes(lowerQuery))
+                .slice(0, this.limit);
+        }
+
+        const fuzzySearch = prepareFuzzySearch(trimmedQuery);
+        const matches = candidates
+            .map(model => {
+                const match = fuzzySearch(model);
+                return match ? { model, matches: match.matches, score: match.score } : null;
+            })
+            .filter(item => Boolean(item))
+            .sort((a, b) => b.score - a.score);
+        
+        return matches.slice(0, this.limit).map(item => item.model);
+    }
+}
+```
+
+- Type to search through available models
+- Fuzzy matching highlights matches in suggestions
+- Supports up to 50 results
+- Keyboard navigation with arrow keys
+
+### Mobile Experience (Dropdown)
+
+```typescript
+// From ProviderFormModal.ts:336-354
+if (Platform.isMobileApp) {
+    modelSetting.addDropdown(dropdown => {
+        dropdown.selectEl.setAttribute('data-testid', 'model-select');
+        dropdown.setDisabled(modelState.isDisabled);
+        dropdown.addOption('', modelState.placeholder);
+
+        const optionValues = modelState.currentModel
+            ? [modelState.currentModel, ...modelState.models]
+            : modelState.models;
+        Array.from(new Set(optionValues)).forEach(model => {
+            dropdown.addOption(model, model);
+        });
+
+        dropdown.setValue(modelState.currentModel);
+        dropdown.onChange(value => {
+            this.provider.model = value;
+        });
+    });
+}
+```
+
+- Standard dropdown selector
+- All available models listed
+- Simpler interface for touch devices
+
+### Refresh Models Button
+
+Click the **refresh icon** to fetch the latest available models:
+
+```typescript
+// From ProviderFormModal.ts:434-456
+private async refreshModels() {
+    try {
+        this.isLoadingModels = true;
+        this.display();
+
+        const models = await this.plugin.aiProviders.fetchModels(
+            this.provider
+        );
+        this.provider.availableModels = models;
+
+        if (models.length > 0) {
+            this.provider.model = models[0] || '';
+        }
+
+        new Notice(I18n.t('settings.modelsUpdated'));
+    } catch (error) {
+        logger.error('Failed to fetch models:', error);
+        new Notice(I18n.t('errors.failedToFetchModels'));
+    } finally {
+        this.isLoadingModels = false;
+        this.display();
+    }
+}
+```
+
+**What happens:**
+1. Button shows loading spinner
+2. Plugin calls the provider's API to fetch models
+3. Model list updates with fresh data
+4. First model is auto-selected
+5. Success or error notice appears
+
+<Note>
+  The **API key** and **URL** must be configured correctly for model fetching to work.
+</Note>
+
+## Testing Provider Connections
+
+The best way to test a provider is by fetching its models:
+
+<Steps>
+  <Step title="Configure Basic Settings">
+    Ensure **Provider Type**, **URL**, and **API Key** (if required) are set.
+  </Step>
+  
+  <Step title="Click Refresh Models">
+    Click the refresh icon next to the model field.
+  </Step>
+  
+  <Step title="Check Results">
+    - **Success:** Model dropdown/combobox populates with available models
+    - **Failure:** Error notice appears with details
+  </Step>
+</Steps>
+
+<Accordion title="Model fetching state management">
+  ```typescript
+  private getModelControlState(): ModelControlState {
+      const models = this.provider.availableModels || [];
+      const hasModels = models.length > 0;
+      const isDisabled = this.isLoadingModels || !hasModels;
+      const placeholder = this.isLoadingModels
+          ? I18n.t('settings.loadingModels')
+          : hasModels
+            ? I18n.t('settings.modelSearchPlaceholder')
+            : I18n.t('settings.noModelsAvailable');
+      
+      return {
+          models,
+          currentModel: this.provider.model || '',
+          isDisabled,
+          placeholder,
+      };
+  }
+  ```
+  
+  The model input is disabled while loading or when no models are available.
+</Accordion>
+
+## Debug Logging Option
+
+Enable detailed logging to troubleshoot connection issues:
+
+```typescript
+// From settings.ts:287-298
+new Setting(developerSection)
+    .setName(I18n.t('settings.debugLogging'))
+    .setDesc(I18n.t('settings.debugLoggingDesc'))
+    .addToggle(toggle =>
+        toggle
+            .setValue(this.plugin.settings.debugLogging ?? false)
+            .onChange(async value => {
+                this.plugin.settings.debugLogging = value;
+                logger.setEnabled(value);
+                await this.plugin.saveSettings();
+            })
+    );
+```
+
+### Enabling Debug Logging
+
+<Steps>
+  <Step title="Toggle Developer Settings">
+    In the plugin settings, enable **Developer Settings** toggle.
+  </Step>
+  
+  <Step title="Enable Debug Logging">
+    Turn on the **Debug Logging** toggle in the expanded developer section.
+  </Step>
+  
+  <Step title="Check Console">
+    Open Obsidian's Developer Console (Ctrl/Cmd + Shift + I) and navigate to the Console tab.
+  </Step>
+  
+  <Step title="Perform Actions">
+    Fetch models, execute requests, or perform other operations. Detailed logs will appear in the console.
+  </Step>
+</Steps>
+
+<Note>
+  Debug logging can generate significant console output. Disable it when not actively troubleshooting.
+</Note>
+
+## Troubleshooting Common Issues
+
+### Provider Name Already Exists
+
+**Error:** "Provider name already exists: {name}"
+
+**Cause:** You're trying to create or rename a provider with a name that's already in use.
+
+**Solution:**
+```typescript
+// The validation that triggers this from settings.ts:86-92
+const existingProvider = providers.find(
+    (p: IAIProvider) =>
+        p.name.trim() === provider.name.trim() && p.id !== provider.id
+);
+if (existingProvider) {
+    return { isValid: false, error: I18n.t('errors.providerNameExists', { name: provider.name }) };
+}
+```
+
+Choose a unique name for your provider.
+
+### Failed to Fetch Models
+
+**Error:** "Failed to fetch models"
+
+**Common Causes:**
+
+<AccordionGroup>
+  <Accordion title="Invalid API Key">
+    - Verify your API key is correct
+    - Check if the key has expired
+    - Ensure the key has proper permissions
+  </Accordion>
+  
+  <Accordion title="Incorrect URL">
+    - Confirm the URL matches the provider's documentation
+    - Check for typos (https vs http, trailing slashes)
+    - For local providers, ensure the service is running
+  </Accordion>
+  
+  <Accordion title="Network Issues">
+    - Check your internet connection
+    - Verify firewall isn't blocking the request
+    - Try disabling VPN if applicable
+  </Accordion>
+  
+  <Accordion title="CORS Issues (Local Providers)">
+    For Ollama:
+    ```bash
+    # macOS
+    launchctl setenv OLLAMA_ORIGINS "*"
+    
+    # Linux (add to service file)
+    Environment="OLLAMA_ORIGINS=*"
+    
+    # Windows (PowerShell)
+    [Environment]::SetEnvironmentVariable("OLLAMA_ORIGINS", "*", "User")
+    ```
+    
+    Then restart the Ollama service.
+  </Accordion>
+</AccordionGroup>
+
+### Provider Not Available in Other Plugins
+
+**Symptom:** Other plugins don't see your configured provider.
+
+**Solutions:**
+
+1. **Ensure provider is saved** - Check that the provider appears in the Configured Providers list
+2. **Restart Obsidian** - Sometimes plugins need a restart to detect new providers
+3. **Check version compatibility** - The consuming plugin may require a specific AI Providers version
+
+```typescript
+// Other plugins can check compatibility
+aiProviders.checkCompatibility(requiredVersion);
+```
+
+### Models Not Loading on Mobile
+
+**Symptom:** Model dropdown stays empty on mobile devices.
+
+**Cause:** The mobile interface uses a different control than desktop.
+
+**Solution:**
+1. Ensure you've clicked the refresh button
+2. Wait for the loading state to complete
+3. Check debug logs for fetch errors
+4. Verify the provider supports model fetching (some don't)
+
+### Text Input Instead of Model Selector
+
+**Symptom:** You see a text input for the model field instead of a searchable dropdown.
+
+**Cause:** The provider doesn't support automatic model fetching:
+
+```typescript
+// From ProviderFormModal.ts:58
+ai302: {
+    url: 'https://api.302.ai/v1',
+    name: '302.AI',
+    options: { modelsFetching: false },
+},
+```
+
+**Solution:** Manually enter the model name according to the provider's documentation.
+
+### Empty API Key Validation
+
+**Note:** The plugin doesn't validate API keys on save. Empty keys are allowed for:
+- Local providers (Ollama, LM Studio)
+- Testing configurations
+- Providers that don't require authentication
+
+If you see authentication errors when using the provider, ensure you've entered a valid API key.
+
+---
+
+<Card title="Need More Help?" icon="question">
+  - Check the [GitHub Issues](https://github.com/pfrankov/obsidian-ai-providers/issues) for known problems
+  - Enable debug logging and check console output
+  - Review provider-specific documentation for API requirements
+</Card>

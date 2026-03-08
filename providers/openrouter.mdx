@@ -1,0 +1,223 @@
+---
+title: OpenRouter
+description: Set up OpenRouter to access multiple AI providers through a single API in Obsidian AI Providers
+---
+
+OpenRouter is a unified API that provides access to multiple AI providers and models through a single interface. It's perfect for users who want flexibility to try different models without managing multiple API keys and accounts.
+
+## Overview
+
+- **Type**: Cloud aggregator
+- **Cost**: Pay-per-use, varies by model (see [pricing](https://openrouter.ai/docs/pricing))
+- **API Key Required**: Yes
+- **Installation Required**: No
+- **Official Website**: [https://openrouter.ai/](https://openrouter.ai/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create an OpenRouter account">
+    Sign up at [openrouter.ai](https://openrouter.ai/) using your preferred authentication method.
+  </Step>
+  
+  <Step title="Add credits (optional)">
+    Navigate to [Credits](https://openrouter.ai/credits) to add funds. OpenRouter offers free credits for trying models.
+  </Step>
+  
+  <Step title="Generate an API key">
+    Go to [API Keys](https://openrouter.ai/settings/keys) and create a new key. Copy it for use in AI Providers.
+  </Step>
+</Steps>
+
+<Note>
+OpenRouter provides free credits when you sign up, allowing you to test different models before committing funds.
+</Note>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select OpenRouter provider">
+    In the AI Providers settings, click **Create AI provider** and select `OpenRouter` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    https://openrouter.ai/api/v1
+    ```
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the [API keys page](https://openrouter.ai/settings/keys) into the `API key` field.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch the extensive list of available models, then select your preferred model (e.g., `anthropic/claude-3.7-sonnet`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify your configuration works.
+  </Step>
+</Steps>
+
+## Available Models
+
+OpenRouter provides access to models from multiple providers. Here are some popular options:
+
+### Premium Models
+
+| Model ID | Provider | Description |
+|----------|----------|-------------|
+| `anthropic/claude-3.7-sonnet` | Anthropic | Latest Claude, excellent quality |
+| `openai/gpt-4o` | OpenAI | GPT-4 Omni, multimodal |
+| `google/gemini-2.0-flash-exp` | Google | Fast Gemini model |
+| `meta-llama/llama-3.3-70b-instruct` | Meta | Powerful open model |
+| `anthropic/claude-opus-4` | Anthropic | Highest quality Claude |
+
+### Cost-Effective Models
+
+| Model ID | Provider | Description |
+|----------|----------|-------------|
+| `openai/gpt-3.5-turbo` | OpenAI | Fast and affordable |
+| `anthropic/claude-3-haiku` | Anthropic | Quick responses |
+| `google/gemini-flash-1.5` | Google | Efficient and fast |
+| `meta-llama/llama-3.2-3b-instruct:free` | Meta | Free tier option |
+
+### Specialized Models
+
+| Model ID | Provider | Description |
+|----------|----------|-------------|
+| `perplexity/llama-3.1-sonar-huge-128k-online` | Perplexity | Web search integration |
+| `openai/o1-preview` | OpenAI | Advanced reasoning |
+| `qwen/qwen-2.5-72b-instruct` | Qwen | Excellent multilingual |
+
+<Note>
+Model availability and pricing change frequently. Check the [OpenRouter models page](https://openrouter.ai/models) for the most current list.
+</Note>
+
+## Key Features
+
+### Single API for Multiple Providers
+
+Access models from:
+- OpenAI
+- Anthropic
+- Google
+- Meta
+- Mistral
+- And many more
+
+All through one API key and endpoint.
+
+### Free Models
+
+Some models are available for free (with rate limits):
+- Look for models with `:free` in their ID
+- Perfect for testing and development
+- Community-supported options
+
+### Fallback Options
+
+You can configure fallback models if your primary choice is unavailable or rate-limited.
+
+### Model Routing
+
+OpenRouter can automatically route to the best available model based on:
+- Availability
+- Cost
+- Performance
+- Your preferences
+
+## Troubleshooting
+
+### Model Not Available
+
+If a model shows as unavailable:
+1. Check the [models page](https://openrouter.ai/models) for current availability
+2. Some models require specific provider access
+3. Try an alternative model from the same family
+
+### Insufficient Credits
+
+If requests fail due to credits:
+1. Check your [credit balance](https://openrouter.ai/credits)
+2. Add more credits to your account
+3. Try a free model as an alternative
+
+### Rate Limits
+
+<Warning>
+Free models have rate limits. If you hit limits:
+- Wait for the limit to reset
+- Upgrade to a paid model
+- Use multiple free models in rotation
+</Warning>
+
+### Model ID Format
+
+Always use the full model ID format:
+```
+provider/model-name
+```
+
+Examples:
+- `anthropic/claude-3.7-sonnet`
+- `openai/gpt-4o`
+- `google/gemini-flash-1.5`
+
+## Pricing Considerations
+
+OpenRouter pricing varies by model:
+- **Premium models**: Similar to direct provider pricing (sometimes slightly higher)
+- **Free models**: No cost but rate-limited
+- **Competitive models**: Often better value than direct access
+
+**Cost-saving tips:**
+- Use free models for development
+- Compare prices on the [models page](https://openrouter.ai/models)
+- Set spending limits in your [account settings](https://openrouter.ai/settings)
+- Monitor usage in your [dashboard](https://openrouter.ai/activity)
+
+## Advanced Configuration
+
+### Custom Headers
+
+OpenRouter supports custom headers for:
+- App identification
+- User tracking
+- Request routing
+
+### Model Parameters
+
+Pass standard parameters:
+- `temperature` - Control randomness
+- `max_tokens` - Response length
+- `top_p` - Nucleus sampling
+- `stop` - Stop sequences
+
+### Provider Preferences
+
+You can specify provider preferences to:
+- Route to specific data centers
+- Require certain provider features
+- Optimize for cost or speed
+
+## Best Practices
+
+1. **Start with free models**: Test your integration without cost
+2. **Compare models**: Try different options for your use case
+3. **Monitor costs**: Check your usage regularly
+4. **Set up fallbacks**: Have backup models configured
+5. **Use the right model**: Balance cost, speed, and quality
+
+## Advantages of OpenRouter
+
+- **Flexibility**: Switch between models without changing code
+- **Cost comparison**: Easy to compare pricing across providers
+- **No multiple API keys**: Manage everything through OpenRouter
+- **Community**: Access to community-hosted models
+- **Reliability**: Automatic failover to alternative providers
+
+<Note>
+OpenRouter is particularly useful if you want to experiment with different models or need fallback options when primary models are unavailable.
+</Note>

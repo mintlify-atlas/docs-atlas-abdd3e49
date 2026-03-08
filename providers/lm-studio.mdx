@@ -1,0 +1,229 @@
+---
+title: LM Studio
+description: Set up LM Studio as your local AI provider in Obsidian AI Providers
+---
+
+LM Studio is a desktop application that allows you to run large language models locally on your computer with an easy-to-use interface. It's perfect for users who want local AI with a graphical interface for model management.
+
+## Overview
+
+- **Type**: Local provider
+- **Cost**: Free
+- **API Key Required**: No
+- **Installation Required**: Yes
+- **Official Website**: [https://lmstudio.ai/](https://lmstudio.ai/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Download LM Studio">
+    Download and install LM Studio from [lmstudio.ai](https://lmstudio.ai/) for your operating system (Windows, macOS, or Linux).
+  </Step>
+  
+  <Step title="Download a model">
+    Open LM Studio and use the built-in model browser to download a model. Popular options include:
+    - **Llama 3.2** - Fast and capable
+    - **Mistral 7B** - Excellent general purpose
+    - **Phi-3** - Small and efficient
+    - **Gemma 2** - Google's open model
+  </Step>
+  
+  <Step title="Load the model">
+    In LM Studio, load the downloaded model by selecting it from your collection.
+  </Step>
+  
+  <Step title="Start the server">
+    Click the "Start Server" button in LM Studio to enable the local API server (default port: 1234).
+  </Step>
+</Steps>
+
+<Note>
+LM Studio provides a user-friendly interface for downloading, managing, and running models without command-line knowledge.
+</Note>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select LM Studio provider">
+    In the AI Providers settings, click **Create AI provider** and select `LM Studio` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    http://localhost:1234/v1
+    ```
+    
+    (Change the port if you configured LM Studio to use a different one)
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch the currently loaded model. The model name will appear automatically.
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify the connection is working.
+  </Step>
+</Steps>
+
+<Warning>
+Make sure LM Studio's server is running before using it with AI Providers. The server must be started manually each time you open LM Studio.
+</Warning>
+
+## Recommended Models
+
+| Model Family | Size | RAM Required | Best For |
+|--------------|------|--------------|----------|
+| Llama 3.2 | 3B | ~4GB | Fast, balanced performance |
+| Phi-3 Mini | 3.8B | ~4GB | Efficient, great quality |
+| Gemma 2 | 2B-9B | 4-12GB | Google quality, various sizes |
+| Mistral | 7B | ~8GB | High quality general purpose |
+| Llama 3.1 | 8B | ~10GB | Excellent instruction following |
+| Qwen 2.5 | 7B | ~8GB | Strong multilingual support |
+
+<Note>
+LM Studio shows you model sizes and estimated RAM requirements when browsing models, making it easy to choose one that fits your hardware.
+</Note>
+
+## Key Features
+
+### Graphical Model Management
+
+- Browse and download models from Hugging Face
+- Visual interface for model selection
+- Easy model updates and management
+- Model performance metrics
+
+### Quantization Options
+
+LM Studio offers models in different quantization levels:
+- **Q4** - Smaller file size, faster, slightly lower quality
+- **Q5** - Balanced option
+- **Q8** - Higher quality, larger file size
+- **FP16** - Full precision, best quality, largest size
+
+### Hardware Acceleration
+
+- Automatic GPU detection and usage
+- CPU-only mode for systems without compatible GPUs
+- Metal support for Apple Silicon Macs
+- CUDA support for NVIDIA GPUs
+
+### Chat Interface
+
+Test models directly in LM Studio before using them with Obsidian:
+- Interactive chat interface
+- Prompt templates
+- Parameter tuning
+- Performance monitoring
+
+## Troubleshooting
+
+### Server Not Running
+
+If you can't connect to LM Studio:
+1. Open LM Studio application
+2. Load a model from your collection
+3. Click "Start Server" in the Local Server tab
+4. Verify the port number matches your AI Providers settings
+
+### Model Not Loading
+
+If the model fails to load:
+1. Check you have enough RAM available
+2. Try a smaller model or lower quantization
+3. Close other applications to free up memory
+4. Check LM Studio logs for error messages
+
+### Slow Performance
+
+<Note>
+Performance depends on your hardware:
+- **With GPU**: Much faster, can handle larger models
+- **CPU only**: Slower, stick to smaller models (3B-7B)
+- **RAM**: More RAM allows larger models and longer contexts
+</Note>
+
+To improve performance:
+1. Use a smaller model
+2. Enable GPU acceleration if available
+3. Choose a lower quantization (Q4 instead of Q8)
+4. Reduce context length settings
+
+### Connection Refused
+
+If AI Providers can't connect:
+1. Verify LM Studio server is running (green indicator)
+2. Check the port number in both LM Studio and AI Providers
+3. Ensure no firewall is blocking localhost connections
+4. Try visiting `http://localhost:1234` in your browser
+
+## Advanced Configuration
+
+### Custom Port
+
+To use a different port:
+1. In LM Studio, go to Settings → Server
+2. Change the port number
+3. Update the Provider URL in AI Providers accordingly
+
+### Model Parameters
+
+Adjust in LM Studio's interface:
+- **Context Length** - How much text the model can process
+- **Temperature** - Control randomness (0.0-2.0)
+- **Top P** - Nucleus sampling parameter
+- **Repeat Penalty** - Reduce repetition
+- **GPU Layers** - How much to offload to GPU
+
+### Prompt Templates
+
+LM Studio supports various prompt templates:
+- ChatML
+- Llama
+- Alpaca
+- Vicuna
+- Custom formats
+
+The correct template is usually auto-detected based on the model.
+
+## Best Practices
+
+1. **Match model to hardware**: Choose model size based on your RAM
+2. **Use GPU if available**: Dramatically faster than CPU-only
+3. **Start small**: Test with smaller models first
+4. **Keep server running**: More convenient than starting/stopping
+5. **Update models**: Check for updated versions periodically
+6. **Monitor performance**: Use LM Studio's built-in metrics
+
+## Comparison with Ollama
+
+**LM Studio advantages:**
+- Graphical interface
+- Easier for beginners
+- Visual model browsing
+- Built-in chat interface
+
+**Ollama advantages:**
+- Command-line efficiency
+- Better for automation
+- Lower overhead
+- More scripting options
+
+<Note>
+Both LM Studio and Ollama are excellent choices for local AI. Choose based on your preference for graphical (LM Studio) vs command-line (Ollama) interfaces.
+</Note>
+
+## Privacy and Offline Use
+
+LM Studio offers complete privacy:
+- All processing happens locally
+- No data sent to external servers
+- Works completely offline
+- No API keys or accounts needed
+
+Perfect for:
+- Sensitive documents
+- Offline environments
+- Privacy-conscious users
+- Air-gapped systems

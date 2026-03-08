@@ -1,0 +1,283 @@
+---
+title: Error Handling
+description: Best practices for handling errors in the AI Providers SDK
+---
+
+## Error Handling Overview
+
+All SDK methods (`execute()`, `embed()`, `retrieve()`) throw errors when something goes wrong. In most cases, the SDK automatically shows a Notice in the Obsidian UI with the error message.
+
+<Note>
+  Even though the SDK displays errors in the UI, you should still handle errors in your plugin code to prevent crashes and provide better user experiences.
+</Note>
+
+## Error Types
+
+The SDK can throw several types of errors:
+
+- **Provider errors**: Issues connecting to or authenticating with AI providers
+- **Abort errors**: When operations are cancelled via `AbortController`
+- **Validation errors**: Invalid parameters or missing required fields
+- **Network errors**: Connection timeouts or network failures
+
+## execute() Error Handling
+
+Since SDK 1.5.0, `execute()` returns a `Promise<string>` that rejects on error.
+
+### Basic Error Handling
+
+```typescript
+try {
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "What is the capital of Great Britain?",
+    onProgress: (chunk, full) => {
+      console.log(full);
+    }
+  });
+  console.log('Success:', result);
+} catch (error) {
+  // Error is also shown as a Notice in Obsidian
+  console.error('Execution failed:', error);
+}
+```
+
+### Handling Abort Errors
+
+<Warning>
+  When using `AbortController`, the error message will be exactly `"Aborted"`. Check for this specific string to distinguish user cancellations from other errors.
+</Warning>
+
+```typescript
+const abortController = new AbortController();
+
+try {
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Stream something...",
+    abortController,
+    onProgress: (_chunk, text) => {
+      console.log(text);
+      // Abort after 50 characters
+      if (text.length > 50) {
+        abortController.abort();
+      }
+    }
+  });
+  console.log('Completed:', result);
+} catch (e) {
+  if ((e as Error).message === 'Aborted') {
+    console.log('Generation aborted intentionally');
+  } else {
+    console.error('Unexpected error:', e);
+  }
+}
+```
+
+### Messages Format Error Handling
+
+```typescript
+try {
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    messages: [
+      { role: "system", content: "You are a helpful assistant." },
+      { role: "user", content: "What is the capital of Great Britain?" }
+    ],
+    onProgress: (_chunk, text) => console.log(text)
+  });
+  console.log('Result:', result);
+} catch (error) {
+  console.error('Chat execution failed:', error);
+  // Handle provider-specific errors
+  if (error instanceof Error) {
+    if (error.message.includes('API key')) {
+      console.error('Authentication error - check API key');
+    } else if (error.message.includes('timeout')) {
+      console.error('Request timed out');
+    }
+  }
+}
+```
+
+## embed() Error Handling
+
+The `embed()` method throws errors for invalid input, provider issues, or aborted operations.
+
+### Basic Error Handling
+
+```typescript
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: "What is the capital of Great Britain?",
+  });
+  console.log('Embeddings:', embeddings);
+} catch (error) {
+  // Error is also shown as a Notice
+  console.error('Embedding failed:', error);
+}
+```
+
+### Progress Tracking with Error Handling
+
+```typescript
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: ["Text 1", "Text 2", "Text 3"],
+    onProgress: (processedChunks) => {
+      console.log(`Processed: ${processedChunks.length} chunks`);
+    }
+  });
+  console.log('All embeddings generated:', embeddings.length);
+} catch (error) {
+  console.error('Embedding generation failed:', error);
+}
+```
+
+### Abort Handling for Embeddings
+
+```typescript
+const abortController = new AbortController();
+
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: ["Text 1", "Text 2", "Text 3"],
+    abortController,
+    onProgress: (processedChunks) => {
+      if (processedChunks.length >= 2) {
+        abortController.abort();
+      }
+    }
+  });
+} catch (error) {
+  if ((error as Error).message === 'Aborted') {
+    console.log('Embedding aborted by user');
+  } else {
+    console.error('Embedding error:', error);
+  }
+}
+```
+
+## retrieve() Error Handling
+
+The `retrieve()` method can throw errors related to document processing, embeddings, or search operations.
+
+### Basic Error Handling
+
+```typescript
+try {
+  const results = await aiProviders.retrieve({
+    query: "machine learning algorithms",
+    documents: documents,
+    embeddingProvider: aiProviders.providers[0]
+  });
+  console.log('Found results:', results.length);
+} catch (error) {
+  // Handle retrieval errors (e.g., provider issues, invalid documents)
+  console.error('Retrieval failed:', error);
+}
+```
+
+### Progress Tracking with Error Handling
+
+```typescript
+try {
+  const results = await aiProviders.retrieve({
+    query: "search query",
+    documents: documents,
+    embeddingProvider: aiProviders.providers[0],
+    onProgress: (progress) => {
+      const percentage = (progress.processedChunks.length / progress.totalChunks) * 100;
+      console.log(`Progress: ${percentage.toFixed(1)}%`);
+    }
+  });
+  console.log('Search complete:', results.length, 'results');
+} catch (error) {
+  console.error('Search failed:', error);
+}
+```
+
+### Abort Handling for Retrieval
+
+```typescript
+const abortController = new AbortController();
+
+try {
+  const results = await aiProviders.retrieve({
+    query: "search query",
+    documents: largeDocumentSet,
+    embeddingProvider: aiProviders.providers[0],
+    abortController,
+    onProgress: (progress) => {
+      // Cancel if processing takes too long
+      if (progress.processedChunks.length > 1000) {
+        abortController.abort();
+      }
+    }
+  });
+} catch (error) {
+  if ((error as Error).message === 'Aborted') {
+    console.log('Search cancelled');
+  } else {
+    console.error('Search error:', error);
+  }
+}
+```
+
+## fetchModels() Error Handling
+
+```typescript
+try {
+  const models = await aiProviders.fetchModels({
+    provider: aiProviders.providers[0],
+    abortController: new AbortController()
+  });
+  console.log('Available models:', models);
+} catch (error) {
+  console.error('Failed to fetch models:', error);
+}
+```
+
+## Provider-Specific Errors
+
+Different providers may return different error messages. Common patterns:
+
+```typescript
+try {
+  const result = await aiProviders.execute({
+    provider: provider,
+    prompt: "Test prompt"
+  });
+} catch (error) {
+  if (error instanceof Error) {
+    // OpenAI/OpenRouter API errors
+    if (error.message.includes('401') || error.message.includes('API key')) {
+      console.error('Authentication failed - check API key');
+    }
+    // Ollama connection errors
+    else if (error.message.includes('ECONNREFUSED')) {
+      console.error('Cannot connect to Ollama - is it running?');
+    }
+    // Rate limiting
+    else if (error.message.includes('429') || error.message.includes('rate limit')) {
+      console.error('Rate limit exceeded - wait before retrying');
+    }
+    // Model not found
+    else if (error.message.includes('404') || error.message.includes('model')) {
+      console.error('Model not found or not available');
+    }
+  }
+}
+```
+
+## Best Practices
+
+1. **Always use try/catch**: Wrap all SDK method calls in try/catch blocks
+2. **Check abort errors**: Use `error.message === 'Aborted'` to detect user cancellations
+3. **Log for debugging**: Log errors to console even though they appear in Notices
+4. **Provide feedback**: Show custom UI feedback based on error types
+5. **Handle async properly**: Use `await` or `.catch()` on all promise-returning methods
+6. **Don't suppress errors**: Let users know when something fails

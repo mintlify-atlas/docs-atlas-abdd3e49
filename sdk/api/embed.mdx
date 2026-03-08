@@ -1,0 +1,235 @@
+---
+title: embed()
+description: Generate embeddings for text with automatic caching
+---
+
+Generate vector embeddings for text using AI providers. Embeddings are automatically cached for performance.
+
+## Method Signature
+
+```typescript
+embed(params: IAIProvidersEmbedParams): Promise<number[][]>
+```
+
+## Parameters
+
+<ParamField path="provider" type="IAIProvider" required>
+  The AI provider to use for generating embeddings. Must support embeddings (typically providers with embedding models).
+</ParamField>
+
+<ParamField path="input" type="string | string[]" required>
+  The text to embed. Can be a single string or an array of strings for batch processing.
+  
+  ```typescript
+  // Single input
+  input: "What is the capital of Great Britain?"
+  
+  // Multiple inputs (batch)
+  input: ["Text 1", "Text 2", "Text 3"]
+  ```
+</ParamField>
+
+<ParamField path="onProgress" type="(processedEmbeddings: string[]) => void">
+  Optional callback to track embedding generation progress, especially useful for multiple inputs.
+  
+  - `processedEmbeddings`: Array of text chunks that have been processed so far
+  
+  ```typescript
+  onProgress: (processedChunks) => {
+    console.log(`Processed ${processedChunks.length} chunks`);
+    console.log('Latest chunks:', processedChunks);
+  }
+  ```
+</ParamField>
+
+<ParamField path="abortController" type="AbortController">
+  Optional AbortController to cancel the embedding operation.
+  
+  ```typescript
+  const controller = new AbortController();
+  abortController: controller
+  ```
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<number[][]>" type="number[][]">
+  A promise that resolves to an array of embedding vectors. Each embedding is an array of numbers.
+  
+  - For single input: Returns array with one embedding `[[0.1, 0.2, 0.3, ...]]`
+  - For multiple inputs: Returns array with multiple embeddings, one per input
+  
+  ```typescript
+  // Single input result
+  [[0.1, 0.2, 0.3, 0.4, ...]] // One embedding vector
+  
+  // Multiple inputs result
+  [
+    [0.1, 0.2, 0.3, ...], // Embedding for "Text 1"
+    [0.4, 0.5, 0.6, ...], // Embedding for "Text 2"
+    [0.7, 0.8, 0.9, ...]  // Embedding for "Text 3"
+  ]
+  ```
+</ResponseField>
+
+## Examples
+
+### Basic Embedding
+
+```typescript
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: "What is the capital of Great Britain?"
+});
+
+// embeddings is a 2D array with one embedding vector
+console.log(embeddings); // [[0.1, 0.2, 0.3, ...]]
+console.log(embeddings[0]); // [0.1, 0.2, 0.3, ...]
+```
+
+### Batch Embedding Multiple Texts
+
+```typescript
+const texts = [
+  "Machine learning is a subset of AI",
+  "Deep learning uses neural networks",
+  "Natural language processing enables text understanding"
+];
+
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: texts
+});
+
+// Returns one embedding per input text
+console.log(embeddings.length); // 3
+console.log(embeddings[0]); // Embedding for first text
+console.log(embeddings[1]); // Embedding for second text
+console.log(embeddings[2]); // Embedding for third text
+```
+
+### Progress Tracking
+
+```typescript
+const largeTextBatch = ["Text 1", "Text 2", "Text 3", "Text 4", "Text 5"];
+
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: largeTextBatch,
+  onProgress: (processedChunks) => {
+    const progress = (processedChunks.length / largeTextBatch.length) * 100;
+    console.log(`Progress: ${progress.toFixed(1)}%`);
+    console.log(`Processed: ${processedChunks.length}/${largeTextBatch.length}`);
+  }
+});
+
+console.log('All embeddings generated:', embeddings.length);
+```
+
+### With AbortController
+
+```typescript
+const controller = new AbortController();
+
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: ["Text 1", "Text 2", "Text 3"],
+    abortController: controller,
+    onProgress: (processed) => {
+      if (processed.length >= 2) {
+        controller.abort(); // Cancel after 2 chunks
+      }
+    }
+  });
+} catch (error) {
+  if ((error as Error).message === 'Aborted') {
+    console.log('Embedding cancelled');
+  }
+}
+```
+
+### Computing Similarity
+
+```typescript
+// Helper function to compute cosine similarity
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+  return dotProduct / (magnitudeA * magnitudeB);
+}
+
+// Generate embeddings
+const embeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: [
+    "Machine learning algorithms",
+    "Artificial intelligence models",
+    "Cooking recipes"
+  ]
+});
+
+// Compare similarity
+const sim1 = cosineSimilarity(embeddings[0], embeddings[1]);
+const sim2 = cosineSimilarity(embeddings[0], embeddings[2]);
+
+console.log('ML vs AI similarity:', sim1); // High similarity
+console.log('ML vs Cooking similarity:', sim2); // Low similarity
+```
+
+## Caching Behavior
+
+<Info>
+  Embeddings are automatically cached in IndexedDB per vault to improve performance. Repeated calls with the same input and provider will return cached results instead of making new API requests.
+  
+  The cache is vault-specific and persists across Obsidian sessions.
+</Info>
+
+## Error Handling
+
+```typescript
+try {
+  const embeddings = await aiProviders.embed({
+    provider: aiProviders.providers[0],
+    input: "What is the capital of Great Britain?"
+  });
+  console.log('Embeddings generated:', embeddings);
+} catch (error) {
+  console.error('Embedding failed:', error);
+  // Handle error (e.g., provider unavailable, network issues)
+}
+```
+
+## Use Cases
+
+### Semantic Search
+
+Embed documents and queries to find semantically similar content:
+
+```typescript
+// Embed all documents
+const docEmbeddings = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: documents.map(doc => doc.content)
+});
+
+// Embed search query
+const queryEmbedding = await aiProviders.embed({
+  provider: aiProviders.providers[0],
+  input: "machine learning"
+});
+
+// Find most similar documents
+const similarities = docEmbeddings.map(docEmbed => 
+  cosineSimilarity(queryEmbedding[0], docEmbed)
+);
+```
+
+### RAG (Retrieval-Augmented Generation)
+
+For full RAG implementation with automatic chunking and retrieval, see the [`retrieve()`](./retrieve) method.
+
+<Tip>
+  The `retrieve()` method internally uses `embed()` with automatic document chunking, progress tracking, and similarity ranking.
+</Tip>

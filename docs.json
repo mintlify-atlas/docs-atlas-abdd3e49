@@ -1,122 +1,90 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Obsidian AI Providers",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#906bda",
+    "light": "#906bda",
+    "dark": "#6c6484"
   },
   "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/pfrankov/obsidian-ai-providers"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/pfrankov/obsidian-ai-providers"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "User Guide",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "user-guide/overview",
+              "user-guide/managing-providers"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Providers",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "providers/ollama",
+              "providers/openai",
+              "providers/anthropic",
+              "providers/google-gemini",
+              "providers/openrouter",
+              "providers/lm-studio",
+              "providers/groq",
+              "providers/other-providers"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "SDK Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Getting Started",
             "pages": [
-              "api-reference/introduction"
+              "sdk/installation",
+              "sdk/integration",
+              "sdk/example-usage"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Core API",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "sdk/api/execute",
+              "sdk/api/embed",
+              "sdk/api/retrieve",
+              "sdk/api/fetch-models"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "sdk/advanced/migration-guide",
+              "sdk/advanced/error-handling",
+              "sdk/advanced/compatibility",
+              "sdk/advanced/typescript-types"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

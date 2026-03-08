@@ -1,0 +1,170 @@
+---
+title: Introduction
+description: Learn what AI Providers is and how it helps you manage AI settings across all your Obsidian plugins
+---
+
+## What is AI Providers?
+
+AI Providers is a **configuration hub** for managing AI settings in Obsidian. Think of it as a central control panel where you can store your API keys and AI provider settings once, then share them across all your Obsidian plugins that need AI capabilities.
+
+<Note>
+  **Important:** AI Providers is a configuration tool—it doesn't do any AI processing itself. It helps other plugins connect to AI services more easily by managing settings in one place.
+</Note>
+
+## Why AI Providers?
+
+Without AI Providers, each AI-powered plugin would need its own settings page for API keys, endpoints, and model selection. This creates several problems:
+
+- **Duplicate configuration**: Enter the same API keys multiple times
+- **Harder maintenance**: Update credentials separately in each plugin
+- **Inconsistent experience**: Different UIs and setup flows
+- **Development overhead**: Plugin developers must build provider integrations from scratch
+
+<CardGroup cols={2}>
+  <Card title="For Users" icon="user">
+    Configure AI providers once, use them everywhere. Switch between OpenAI, Ollama, Claude, and 15+ other providers without reconfiguring each plugin.
+  </Card>
+  <Card title="For Developers" icon="code">
+    Skip building provider integrations. Use the AI Providers SDK to instantly support all providers with just a few lines of code.
+  </Card>
+</CardGroup>
+
+## Key Benefits
+
+### Centralized Configuration
+
+Manage all your AI providers in one settings panel:
+- Store API keys securely
+- Configure provider URLs and endpoints
+- Select models from refreshable lists
+- Enable/disable providers as needed
+
+### Wide Provider Support
+
+AI Providers supports **18+ AI providers** out of the box:
+
+<CardGroup cols={3}>
+  <Card title="Cloud Providers">
+    - OpenAI
+    - Anthropic
+    - Google Gemini
+    - OpenRouter
+    - Mistral AI
+    - Groq
+    - Perplexity AI
+    - DeepSeek
+    - xAI (Grok)
+  </Card>
+  <Card title="Local & Self-Hosted">
+    - Ollama
+    - LM Studio
+    - Open WebUI
+    - llama.cpp
+    - LocalAI
+  </Card>
+  <Card title="Additional Services">
+    - Together AI
+    - Fireworks AI
+    - Cerebras
+    - DeepInfra
+    - SambaNova
+    - And more...
+  </Card>
+</CardGroup>
+
+### Developer-Friendly SDK
+
+The AI Providers SDK makes it simple to add AI capabilities to your plugin:
+
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+// Wait for AI Providers to load
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Execute a prompt with streaming
+const response = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Summarize this note",
+    onProgress: (chunk, fullText) => {
+        console.log(fullText); // Update UI as text streams in
+    }
+});
+```
+
+<Note>
+  The SDK handles all provider-specific API differences, streaming, error handling, and even caching for embeddings.
+</Note>
+
+## Architecture Overview
+
+AI Providers follows a simple, extensible architecture:
+
+```
+┌─────────────────────────────────────────┐
+│  Your Plugin (uses SDK)                 │
+├─────────────────────────────────────────┤
+│  @obsidian-ai-providers/sdk             │
+│  - waitForAI()                          │
+│  - execute(), embed(), retrieve()       │
+├─────────────────────────────────────────┤
+│  AI Providers Plugin                    │
+│  - AIProvidersService                   │
+│  - Provider Handlers                    │
+│  - Settings Management                  │
+│  - Embeddings Cache (IndexedDB)         │
+├─────────────────────────────────────────┤
+│  External AI APIs                       │
+│  - OpenAI, Anthropic, Ollama, etc.      │
+└─────────────────────────────────────────┘
+```
+
+### How It Works
+
+1. **Settings Layer**: Users configure providers in the plugin settings UI
+2. **Service Layer**: `AIProvidersService` manages provider instances and exposes them via the SDK
+3. **Handler Layer**: Provider-specific handlers (OpenAI, Anthropic, Ollama) translate requests to the right API format
+4. **Transport Layer**: `FetchSelector` chooses the appropriate fetch method (Obsidian, Electron, or native)
+5. **Cache Layer**: Embeddings are cached in IndexedDB to avoid redundant API calls
+
+<Warning>
+  AI Providers requires **Obsidian 0.15.0 or later**. It works on desktop and mobile.
+</Warning>
+
+## Supported Features
+
+- **Text Generation**: Stream completions from any provider with `execute()`
+- **Embeddings**: Generate vector embeddings with `embed()` (cached automatically)
+- **RAG Search**: Semantic search with `retrieve()` for retrieval-augmented generation
+- **Messages API**: Support for multi-turn conversations and system prompts
+- **Image Analysis**: Send images to vision models like GPT-4V
+- **Abort Control**: Cancel in-progress requests with `AbortController`
+- **Progress Tracking**: Monitor embedding and retrieval progress
+- **Model Discovery**: Fetch available models dynamically from providers
+
+## Multilingual Support
+
+AI Providers is translated into **11 languages**:
+
+English, Spanish, French, Italian, Portuguese, German, Russian, Chinese, Japanese, Korean, and Dutch.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install AI Providers from the Obsidian community plugin store
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Set up your first AI provider in under 5 minutes
+  </Card>
+</CardGroup>
+
+## Plugins Using AI Providers
+
+AI Providers is used by plugins like:
+
+- **[Local GPT](https://github.com/pfrankov/obsidian-local-gpt)**: Privacy-focused AI assistant with local models
+- More plugins integrating soon...
+
+If you're a plugin developer, check out the [SDK documentation](/sdk/installation) to integrate AI Providers into your plugin.

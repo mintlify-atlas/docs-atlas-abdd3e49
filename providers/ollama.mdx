@@ -1,0 +1,120 @@
+---
+title: Ollama
+description: Set up Ollama as your local AI provider in Obsidian AI Providers
+---
+
+Ollama is a free, open-source tool that lets you run large language models locally on your computer. It's perfect for users who want maximum privacy and offline access to AI capabilities.
+
+## Overview
+
+- **Type**: Local provider
+- **Cost**: Free
+- **API Key Required**: No
+- **Installation Required**: Yes
+- **Official Website**: [https://ollama.com/](https://ollama.com/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Ollama">
+    Download and install Ollama from [ollama.com](https://ollama.com/).
+  </Step>
+  
+  <Step title="Pull a model">
+    Open your terminal and pull a model from the [Ollama library](https://ollama.com/library). For example:
+    
+    ```bash
+    ollama pull gemma2
+    ```
+    
+    Other popular models:
+    - `llama3.2` - Fast and capable
+    - `phi3` - Smaller, efficient model
+    - `mistral` - High-quality general purpose
+    - `qwen2.5` - Excellent multilingual support
+  </Step>
+</Steps>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select Ollama provider">
+    In the AI Providers settings, click **Create AI provider** and select `Ollama` as the provider type.
+  </Step>
+  
+  <Step title="Configure URL (optional)">
+    The default URL is `http://localhost:11434`. Only change this if you're running Ollama on a different host or port.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button next to the model field to fetch available models, then select the model you pulled (e.g., `gemma2`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify the connection is working properly.
+  </Step>
+</Steps>
+
+## Recommended Models
+
+| Model | Size | Best For |
+|-------|------|----------|
+| `gemma2:2b` | ~1.6GB | Fast responses, lower RAM usage |
+| `llama3.2` | ~2GB | Balanced performance |
+| `qwen2.5:7b` | ~4.7GB | High quality, multilingual |
+| `mistral` | ~4.1GB | General purpose tasks |
+| `llama3.1:70b` | ~40GB | Best quality (requires powerful hardware) |
+
+## Troubleshooting
+
+### Streaming Issues
+
+If you experience problems with streaming completions, set the `OLLAMA_ORIGINS` environment variable to allow cross-origin requests:
+
+**macOS:**
+```bash
+launchctl setenv OLLAMA_ORIGINS "*"
+```
+
+**Linux:**
+```bash
+export OLLAMA_ORIGINS="*"
+```
+Add this to your `~/.bashrc` or `~/.zshrc` to make it permanent.
+
+**Windows:**
+```cmd
+setx OLLAMA_ORIGINS "*"
+```
+
+For more details, see the [Ollama FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server).
+
+### Connection Refused
+
+<Warning>
+If you see "connection refused" errors, make sure Ollama is running. You can start it by running `ollama serve` in your terminal or by opening the Ollama application.
+</Warning>
+
+### Model Not Found
+
+If the model doesn't appear in the list:
+1. Make sure you've pulled the model using `ollama pull <model-name>`
+2. Click the refresh button in AI Providers settings
+3. Verify Ollama is running by visiting `http://localhost:11434` in your browser
+
+## Open WebUI Integration
+
+Ollama works seamlessly with [Open WebUI](https://docs.openwebui.com/). If you're using Open WebUI, select `Ollama (Open WebUI)` as your provider type instead and configure it with your Open WebUI URL.
+
+## Advanced Configuration
+
+You can pass custom options to Ollama models by using the options parameter in API calls. Common options include:
+
+- `temperature` - Controls randomness (0.0 to 2.0)
+- `num_ctx` - Context window size (automatically optimized by AI Providers)
+- `top_p` - Nucleus sampling parameter
+- `repeat_penalty` - Penalize repetition
+
+<Note>
+AI Providers automatically optimizes the context window (`num_ctx`) based on your input length, so you typically don't need to set this manually.
+</Note>

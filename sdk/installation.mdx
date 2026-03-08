@@ -1,0 +1,122 @@
+---
+title: Installation
+description: Install and configure the Obsidian AI Providers SDK in your plugin
+---
+
+## Installing the SDK
+
+The SDK is distributed as an npm package and can be installed using your preferred package manager.
+
+<CodeGroup>
+
+```bash npm
+npm install @obsidian-ai-providers/sdk
+```
+
+```bash yarn
+yarn add @obsidian-ai-providers/sdk
+```
+
+```bash pnpm
+pnpm add @obsidian-ai-providers/sdk
+```
+
+</CodeGroup>
+
+## Adding to package.json
+
+The SDK will automatically be added to your `package.json` dependencies:
+
+```json package.json
+{
+  "dependencies": {
+    "@obsidian-ai-providers/sdk": "^1.5.0",
+    "obsidian": "latest"
+  }
+}
+```
+
+## Importing SDK Styles
+
+The SDK includes a fallback settings tab UI that requires styles to be imported. Add the following import to your plugin's main stylesheet:
+
+```css styles.css
+@import '@obsidian-ai-providers/sdk/styles.css';
+```
+
+<Note>
+The SDK styles are required for the fallback settings tab that appears when the AI Providers plugin is not yet loaded or activated.
+</Note>
+
+## esbuild Configuration
+
+You must configure your esbuild setup to load CSS files. Update your `esbuild.config.mjs` file:
+
+```typescript esbuild.config.mjs
+export default {
+  entryPoints: ['main.ts'],
+  bundle: true,
+  external: [
+    'obsidian',
+    'electron',
+    '@codemirror/*'
+  ],
+  format: 'cjs',
+  target: 'es2018',
+  logLevel: 'info',
+  sourcemap: 'inline',
+  treeShaking: true,
+  outfile: 'main.js',
+  loader: {
+    '.ts': 'ts',
+    '.css': 'css'  // Add CSS loader
+  },
+}
+```
+
+<Warning>
+Without the `.css` loader in your esbuild config, the SDK styles will not be bundled correctly and the fallback UI will not display properly.
+</Warning>
+
+## Alternative: Copy Styles Manually
+
+If you prefer not to configure the CSS loader, you can manually copy the contents of `@obsidian-ai-providers/sdk/styles.css` into your own stylesheet.
+
+```bash
+# View the SDK styles
+cat node_modules/@obsidian-ai-providers/sdk/styles.css
+```
+
+Then paste the contents into your plugin's `styles.css` file.
+
+## Version Compatibility
+
+The SDK uses semantic versioning and maintains compatibility requirements with the AI Providers plugin:
+
+<Steps>
+
+<Step title="SDK Version 1.5.0+">
+Requires AI Providers plugin **Service API v3** or higher. This version introduces:
+- `execute()` returns `Promise<string>` with inline streaming via `onProgress`
+- Cancellation support via `AbortController`
+- Deprecated chainable `IChunkHandler` (legacy compatibility only)
+</Step>
+
+<Step title="Compatibility Check">
+The SDK automatically checks version compatibility when initializing. If the installed AI Providers plugin is incompatible, a fallback settings tab will be shown.
+</Step>
+
+<Step title="Migration Guides">
+If upgrading from older SDK versions, refer to the migration guides:
+- [execute() streaming change: IChunkHandler → Promise + onProgress (since 1.5.0)](https://github.com/obsidian-ai-providers/obsidian-ai-providers/blob/main/packages/sdk/migrations/execute-streaming-migration.md)
+</Step>
+
+</Steps>
+
+<Note>
+The SDK is designed to work with Obsidian's plugin API. Ensure your plugin's `manifest.json` specifies a minimum Obsidian version that supports the features you're using.
+</Note>
+
+## Next Steps
+
+After installation, proceed to [Integration](/sdk/integration) to learn how to initialize the SDK in your plugin.

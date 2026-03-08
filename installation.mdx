@@ -1,0 +1,185 @@
+---
+title: Installation
+description: Install AI Providers from the Obsidian community plugin store or using BRAT
+---
+
+## Prerequisites
+
+Before installing AI Providers, make sure you have:
+
+- **Obsidian 0.15.0 or later** (desktop or mobile)
+- An active internet connection (for cloud providers)
+- Optional: Local AI runtime like [Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/) for offline use
+
+<Note>
+  AI Providers works on **both desktop and mobile** versions of Obsidian.
+</Note>
+
+## Installation Methods
+
+<Steps>
+
+### Install from Community Plugins (Recommended)
+
+The easiest way to install AI Providers is directly from Obsidian:
+
+1. Open Obsidian Settings (click the gear icon or press `Cmd/Ctrl + ,`)
+2. Navigate to **Community plugins** in the left sidebar
+3. If you haven't already, click **Turn on community plugins** and confirm
+4. Click **Browse** to open the community plugins browser
+5. Search for **"AI Providers"** in the search bar
+6. Click on the **AI Providers** plugin by Pavel Frankov
+7. Click **Install** and wait for the download to complete
+8. Once installed, click **Enable** to activate the plugin
+
+<Note>
+  You can also install AI Providers directly from the web: [obsidian.md/plugins?id=ai-providers](https://obsidian.md/plugins?id=ai-providers)
+</Note>
+
+### Alternative: Install via BRAT
+
+If you prefer to install using [BRAT](https://obsidian.md/plugins?id=obsidian42-brat) (Beta Reviewers Auto-update Tool):
+
+1. Install the **BRAT** plugin from the community plugins browser
+2. Enable BRAT and open its settings
+3. Click **Add Beta plugin**
+4. Enter the repository: `pfrankov/obsidian-ai-providers`
+5. Click **Add Plugin**
+6. BRAT will install the latest version of AI Providers
+7. Go back to Community plugins and **Enable** AI Providers
+
+<Warning>
+  BRAT installs the latest development version, which may include experimental features or bugs. Use the community plugin store for stable releases.
+</Warning>
+
+### Verify Installation
+
+After installation, confirm AI Providers is working:
+
+1. Open Obsidian Settings
+2. Look for **AI Providers** in the plugin settings list (left sidebar)
+3. Click on **AI Providers** to open the settings page
+4. You should see options to add and configure AI providers
+
+If you see the AI Providers settings page, installation was successful!
+
+</Steps>
+
+## Post-Installation
+
+### Configure Your First Provider
+
+Once installed, AI Providers won't do anything until you configure at least one provider. You have several options:
+
+<CardGroup cols={2}>
+  <Card title="Local (Free)" icon="laptop">
+    **Ollama** or **LM Studio** for completely offline AI without API keys or costs.
+  </Card>
+  <Card title="Cloud (Paid)" icon="cloud">
+    **OpenAI**, **Anthropic**, or **Google Gemini** for powerful models with API keys.
+  </Card>
+</CardGroup>
+
+Head to the [Quick Start guide](/quickstart) for step-by-step instructions.
+
+### Settings Overview
+
+The AI Providers settings page includes:
+
+- **Provider List**: View all configured providers
+- **Add Provider Button**: Create a new provider configuration
+- **Provider Cards**: Each provider shows:
+  - Name and type
+  - Selected model
+  - Edit and delete buttons
+  - Test connection option
+
+### Understanding Provider Types
+
+When you add a provider, you'll choose from these types:
+
+<Accordion title="Cloud API Providers">
+  - **OpenAI**: GPT-4, GPT-3.5, and embedding models
+  - **Anthropic**: Claude 3 (Opus, Sonnet, Haiku)
+  - **Google Gemini**: Gemini 1.5 Pro/Flash
+  - **OpenRouter**: Access to 100+ models through one API
+  - **Groq**: Ultra-fast inference for Llama, Mixtral
+  - **Mistral AI**: Mistral Large, Medium, Small
+  - **Perplexity AI**: Online LLMs with web search
+  - **DeepSeek**: DeepSeek Coder and Chat models
+  - **xAI**: Grok models from X.AI
+  - **Together AI**: Hosted open-source models
+  - **Fireworks AI**: Fast inference for open models
+  - And more...
+</Accordion>
+
+<Accordion title="Local/Self-Hosted Providers">
+  - **Ollama**: Local inference with Llama, Gemma, Mistral, etc.
+  - **LM Studio**: Desktop app with local model hosting
+  - **Open WebUI**: Web interface for local LLMs
+  - **OpenAI Compatible API**: Any server implementing OpenAI's API format (llama.cpp, LocalAI, Text generation web UI, etc.)
+</Accordion>
+
+## Troubleshooting
+
+### Plugin Not Showing Up
+
+- Make sure you **enabled** the plugin after installation
+- Try restarting Obsidian
+- Check that you're running Obsidian 0.15.0 or later
+
+### Settings Page is Empty
+
+This is normal after first install. Click **Add Provider** to create your first provider configuration.
+
+### Community Plugins Disabled
+
+If you can't browse community plugins:
+
+1. Go to Settings → Community plugins
+2. Click **Turn on community plugins**
+3. Accept the security warning
+4. Obsidian will enable the community plugin store
+
+### Mobile Installation Issues
+
+- Ensure you're on a stable internet connection
+- Try closing and reopening Obsidian
+- Mobile plugin installation can be slower—wait 30-60 seconds
+
+<Warning>
+  If you're using Obsidian Sync, settings are synced across devices. However, sensitive data like API keys may need to be re-entered on each device for security.
+</Warning>
+
+## Uninstalling
+
+If you need to remove AI Providers:
+
+1. Open Settings → Community plugins
+2. Find **AI Providers** in the installed plugins list
+3. Click the toggle to **disable** the plugin
+4. Click the trash icon to **uninstall**
+5. Confirm the uninstall action
+
+<Note>
+  Uninstalling AI Providers will remove all provider configurations and cached embeddings. Plugins that depend on AI Providers will show fallback settings to help you reinstall.
+</Note>
+
+## Next Steps
+
+Now that AI Providers is installed, let's set up your first provider:
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Follow our step-by-step guide to configure Ollama or OpenAI and test your first AI request
+</Card>
+
+Or explore the full list of supported providers:
+
+<CardGroup cols={2}>
+  <Card title="Cloud Providers" icon="cloud" href="/providers/openai">
+    OpenAI, Anthropic, Gemini, and more
+  </Card>
+  <Card title="Local Providers" icon="laptop" href="/providers/ollama">
+    Ollama, LM Studio, and self-hosted options
+  </Card>
+</CardGroup>

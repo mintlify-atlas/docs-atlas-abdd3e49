@@ -1,0 +1,538 @@
+---
+title: TypeScript Types
+description: Complete TypeScript type reference for the AI Providers SDK
+---
+
+## Core Service Interface
+
+### IAIProvidersService
+
+The main service interface exposed to plugins.
+
+```typescript
+export interface IAIProvidersService {
+  version: number;
+  providers: IAIProvider[];
+  
+  /** @deprecated Pass an object: { provider, abortController? } */
+  fetchModels(provider: IAIProvider): Promise<string[]>;
+  fetchModels(params: { provider: IAIProvider; abortController?: AbortController }): Promise<string[]>;
+  
+  embed: (params: IAIProvidersEmbedParams) => Promise<number[][]>;
+  
+  /**
+   * Execute text generation.
+   * If caller supplies onProgress or abortController (stream-style usage) -> Promise<string>.
+   * If neither onProgress nor abortController provided (legacy usage) -> Promise<IChunkHandler>.
+   */
+  execute(
+    params: IAIProvidersExecuteParams &
+      ({ onProgress?: (chunk: string, accumulatedText: string) => void } | { abortController?: AbortController })
+  ): Promise<string>;
+  execute(
+    params: IAIProvidersExecuteParams & { onProgress?: undefined; abortController?: undefined }
+  ): Promise<IChunkHandler>;
+  
+  checkCompatibility: (requiredVersion: number) => void;
+  migrateProvider: (provider: IAIProvider) => Promise<IAIProvider | false>;
+  retrieve: (params: IAIProvidersRetrievalParams) => Promise<IAIProvidersRetrievalResult[]>;
+}
+```
+
+## Provider Types
+
+### AIProviderType
+
+Supported AI provider types.
+
+```typescript
+export type AIProviderType =
+  | 'openai'
+  | 'ollama'
+  | 'ollama-openwebui'
+  | 'gemini'
+  | 'openrouter'
+  | 'lmstudio'
+  | 'groq'
+  | 'ai302'
+  | 'anthropic'
+  | 'mistral'
+  | 'together'
+  | 'fireworks'
+  | 'perplexity'
+  | 'deepseek'
+  | 'xai'
+  | 'novita'
+  | 'deepinfra'
+  | 'sambanova'
+  | 'cerebras'
+  | 'zai';
+```
+
+### IAIProvider
+
+Provider configuration interface.
+
+```typescript
+export interface IAIProvider {
+  id: string;
+  name: string;
+  apiKey?: string;
+  url?: string;
+  type: AIProviderType;
+  model?: string;
+  availableModels?: string[];
+}
+```
+
+## Execute Method Types
+
+### IAIProvidersExecuteParams
+
+Union type for execute parameters - either prompt-based or messages-based.
+
+```typescript
+export type IAIProvidersExecuteParams = 
+  | IAIProvidersExecuteParamsWithPrompt 
+  | IAIProvidersExecuteParamsWithMessages;
+```
+
+### IAIProvidersExecuteParamsBase
+
+Base parameters shared by both execute formats.
+
+```typescript
+export interface IAIProvidersExecuteParamsBase {
+  provider: IAIProvider;
+  images?: string[];
+  options?: {
+    temperature?: number;
+    max_tokens?: number;
+    top_p?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    stop?: string[];
+    [key: string]: any;
+  };
+  /** Optional AbortController to cancel execution (stream) */
+  abortController?: AbortController;
+  /** Optional streaming progress callback for partial chunks. The promise resolves with the final text or rejects on error/abort. */
+  onProgress?: (chunk: string, accumulatedText: string) => void;
+}
+```
+
+### IAIProvidersExecuteParamsWithPrompt
+
+Simple prompt-based execution parameters.
+
+```typescript
+export type IAIProvidersExecuteParamsWithPrompt = IAIProvidersExecuteParamsBase & {
+  messages?: never;
+  prompt: string;
+  systemPrompt?: string;
+};
+```
+
+**Example:**
+```typescript
+const result = await aiProviders.execute({
+  provider: provider,
+  prompt: "What is the capital of France?",
+  systemPrompt: "You are a geography expert.",
+  onProgress: (chunk, full) => console.log(full)
+});
+```
+
+### IAIProvidersExecuteParamsWithMessages
+
+Chat messages-based execution parameters.
+
+```typescript
+export type IAIProvidersExecuteParamsWithMessages = IAIProvidersExecuteParamsBase & {
+  messages: IChatMessage[];
+  prompt?: never;
+  systemPrompt?: never;
+};
+```
+
+**Example:**
+```typescript
+const result = await aiProviders.execute({
+  provider: provider,
+  messages: [
+    { role: "system", content: "You are a helpful assistant." },
+    { role: "user", content: "What is the capital of France?" }
+  ],
+  onProgress: (chunk, full) => console.log(full)
+});
+```
+
+### IChatMessage
+
+Chat message format supporting text and images.
+
+```typescript
+export interface IChatMessage {
+  role: string;
+  content: string | IContentBlock[];
+  images?: string[];
+}
+```
+
+**Example with content blocks:**
+```typescript
+const messages: IChatMessage[] = [
+  { 
+    role: "user", 
+    content: [
+      { type: "text", text: "Describe this image" },
+      { type: "image_url", image_url: { url: "data:image/jpeg;base64,..." } }
+    ]
+  }
+];
+```
+
+## Content Block Types
+
+### IContentBlock
+
+Union type for message content blocks.
+
+```typescript
+export type IContentBlock = IContentBlockText | IContentBlockImageUrl;
+```
+
+### IContentBlockText
+
+Text content block.
+
+```typescript
+export interface IContentBlockText {
+  type: 'text';
+  text: string;
+}
+```
+
+### IContentBlockImageUrl
+
+Image URL content block.
+
+```typescript
+export interface IContentBlockImageUrl {
+  type: 'image_url';
+  image_url: {
+    url: string;
+  };
+}
+```
+
+**Example:**
+```typescript
+const imageBlock: IContentBlockImageUrl = {
+  type: "image_url",
+  image_url: {
+    url: "data:image/jpeg;base64,/9j/4AAQSkZ..."
+  }
+};
+```
+
+## Embedding Types
+
+### IAIProvidersEmbedParams
+
+Parameters for generating embeddings.
+
+```typescript
+export interface IAIProvidersEmbedParams {
+  input?: string | string[];
+  provider: IAIProvider;
+  onProgress?: (processedEmbeddings: string[]) => void;
+  abortController?: AbortController;
+}
+```
+
+**Example:**
+```typescript
+const embeddings = await aiProviders.embed({
+  provider: provider,
+  input: ["Text 1", "Text 2", "Text 3"],
+  onProgress: (processed) => {
+    console.log(`Processed ${processed.length} texts`);
+  }
+});
+```
+
+## Retrieval Types
+
+### IAIDocument
+
+Document structure for semantic search.
+
+```typescript
+export interface IAIDocument {
+  content: string;
+  meta?: Record<string, any>;
+}
+```
+
+**Example:**
+```typescript
+const document: IAIDocument = {
+  content: "Machine learning is a subset of AI...",
+  meta: {
+    filename: "ml-notes.md",
+    path: "Notes/ml-notes.md",
+    modified: 1234567890
+  }
+};
+```
+
+### IAIProvidersRetrievalParams
+
+Parameters for semantic search and retrieval.
+
+```typescript
+export interface IAIProvidersRetrievalParams {
+  query: string;
+  documents: IAIDocument[];
+  embeddingProvider: IAIProvider;
+  onProgress?: (progress: IAIProvidersRetrievalProgressInfo) => void;
+  abortController?: AbortController;
+}
+```
+
+**Example:**
+```typescript
+const results = await aiProviders.retrieve({
+  query: "machine learning algorithms",
+  documents: documents,
+  embeddingProvider: provider,
+  onProgress: (progress) => {
+    const percent = (progress.processedChunks.length / progress.totalChunks) * 100;
+    console.log(`Progress: ${percent.toFixed(1)}%`);
+  }
+});
+```
+
+### IAIProvidersRetrievalProgressInfo
+
+Progress information during retrieval operations.
+
+```typescript
+export interface IAIProvidersRetrievalProgressInfo {
+  totalDocuments: number;
+  totalChunks: number;
+  processedDocuments: IAIDocument[]; // References to processed documents
+  processedChunks: IAIProvidersRetrievalChunk[]; // References to processed chunks
+  processingType: IAIProcessingType;
+}
+```
+
+### IAIProvidersRetrievalChunk
+
+Chunk reference during retrieval processing.
+
+```typescript
+export interface IAIProvidersRetrievalChunk {
+  content: string;
+  document: IAIDocument; // Reference to original document
+}
+```
+
+### IAIProvidersRetrievalResult
+
+Single search result with relevance score.
+
+```typescript
+export interface IAIProvidersRetrievalResult {
+  content: string; // Text chunk that matches the query
+  score: number;   // Relevance score of the chunk
+  document: IAIDocument; // Reference to original document (not a copy!)
+}
+```
+
+**Example result:**
+```typescript
+const result: IAIProvidersRetrievalResult = {
+  content: "Machine learning algorithms can be categorized...",
+  score: 0.92,
+  document: {
+    content: "Full document content...",
+    meta: { filename: "ml-notes.md" }
+  }
+};
+```
+
+### IAIProcessingType
+
+Processing type indicator.
+
+```typescript
+export type IAIProcessingType = 'embedding';
+```
+
+## Legacy Types (Deprecated)
+
+### IChunkHandler
+
+<Warning>
+  **Deprecated**: Use `execute()` with `onProgress` callback instead. This interface is only returned when calling `execute()` without `onProgress` or `abortController` parameters.
+</Warning>
+
+```typescript
+/**
+ * @deprecated Use execute({... onProgress ...}) without relying on the returned handler.
+ * The execute method now accepts streaming callbacks directly via params; this object remains only for backward compatibility.
+ */
+export interface IChunkHandler {
+  onData(callback: (chunk: string, accumulatedText: string) => void): void;
+  onEnd(callback: (fullText: string) => void): void;
+  onError(callback: (error: Error) => void): void;
+  abort(): void;
+}
+```
+
+See the [Migration Guide](/sdk/advanced/migration-guide) for how to migrate away from `IChunkHandler`.
+
+## Extended Types
+
+### ExtendedApp
+
+Extended Obsidian App interface with AI Providers.
+
+```typescript
+export interface ExtendedApp extends App {
+  aiProviders?: IAIProvidersService;
+  plugins?: {
+    enablePlugin: (id: string) => Promise<void>;
+    disablePlugin: (id: string) => Promise<void>;
+  };
+  workspace: App['workspace'] & {
+    on: <K extends keyof ObsidianEvents>(event: K, callback: ObsidianEvents[K]) => EventRef;
+    off: <K extends keyof ObsidianEvents>(event: K, callback: ObsidianEvents[K]) => void;
+  };
+}
+```
+
+### ObsidianEvents
+
+Custom Obsidian events.
+
+```typescript
+export type ObsidianEvents = {
+  'ai-providers-ready': () => void;
+};
+```
+
+## SDK Functions
+
+### waitForAI
+
+Wait for AI Providers to be ready.
+
+```typescript
+export declare function waitForAI(): Promise<{
+  promise: Promise<IAIProvidersService>;
+  cancel: () => void;
+}>;
+```
+
+**Example:**
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Use aiProviders
+console.log('Providers:', aiProviders.providers);
+```
+
+### initAI
+
+Initialize AI Providers with fallback settings tab.
+
+```typescript
+export declare function initAI(
+  app: ExtendedApp, 
+  plugin: Plugin, 
+  onDone: () => Promise<void>
+): Promise<void>;
+```
+
+**Example:**
+```typescript
+import { initAI } from '@obsidian-ai-providers/sdk';
+
+export default class MyPlugin extends Plugin {
+  async onload() {
+    initAI(this.app, this, async () => {
+      this.addSettingTab(new MySettingTab(this.app, this));
+    });
+  }
+}
+```
+
+## Type Usage Examples
+
+### Full Execute Example with Types
+
+```typescript
+import { 
+  IAIProvidersService, 
+  IAIProvider,
+  IAIProvidersExecuteParams 
+} from '@obsidian-ai-providers/sdk';
+
+async function generateText(
+  aiProviders: IAIProvidersService,
+  provider: IAIProvider,
+  prompt: string
+): Promise<string> {
+  const params: IAIProvidersExecuteParams = {
+    provider,
+    prompt,
+    options: {
+      temperature: 0.7,
+      max_tokens: 1000
+    },
+    onProgress: (chunk, full) => {
+      console.log('Progress:', full.length, 'chars');
+    }
+  };
+  
+  return await aiProviders.execute(params);
+}
+```
+
+### Full Retrieval Example with Types
+
+```typescript
+import {
+  IAIProvidersService,
+  IAIDocument,
+  IAIProvidersRetrievalResult
+} from '@obsidian-ai-providers/sdk';
+
+async function searchDocuments(
+  aiProviders: IAIProvidersService,
+  query: string,
+  files: TFile[]
+): Promise<IAIProvidersRetrievalResult[]> {
+  const documents: IAIDocument[] = await Promise.all(
+    files.map(async (file) => ({
+      content: await this.app.vault.read(file),
+      meta: {
+        filename: file.name,
+        path: file.path
+      }
+    }))
+  );
+  
+  return await aiProviders.retrieve({
+    query,
+    documents,
+    embeddingProvider: aiProviders.providers[0]
+  });
+}
+```

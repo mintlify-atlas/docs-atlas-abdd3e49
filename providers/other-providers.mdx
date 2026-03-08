@@ -1,0 +1,362 @@
+---
+title: Other Providers
+description: Configure additional OpenAI-compatible AI providers in Obsidian AI Providers
+---
+
+Obsidian AI Providers supports many additional AI providers through OpenAI-compatible APIs. This page covers setup instructions for all remaining supported providers and generic OpenAI-compatible endpoints.
+
+## Supported Providers
+
+The following providers are supported through OpenAI-compatible APIs:
+
+- Mistral AI
+- Together AI
+- Fireworks AI
+- Perplexity AI
+- DeepSeek
+- xAI (Grok)
+- Cerebras
+- Z.AI
+- 302.AI
+- Novita AI
+- DeepInfra
+- SambaNova
+- Any other OpenAI-compatible API
+
+## Generic Setup Process
+
+All OpenAI-compatible providers follow the same setup pattern:
+
+<Steps>
+  <Step title="Select provider type">
+    In the AI Providers settings, click **Create AI provider** and select `OpenAI compatible API` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Enter the provider's API endpoint URL (see provider-specific details below).
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the provider's dashboard.
+  </Step>
+  
+  <Step title="Select or enter model name">
+    Click refresh to fetch models (if supported) or manually enter the model name.
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify everything is configured correctly.
+  </Step>
+</Steps>
+
+## Provider-Specific Details
+
+### Mistral AI
+
+**Overview:**
+- High-performance European AI provider
+- Strong multilingual support
+- Competitive pricing
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.mistral.ai/v1`
+- **API Key**: Get from [console.mistral.ai](https://console.mistral.ai/)
+- **Popular Models**: `mistral-large-latest`, `mistral-small-latest`, `codestral-latest`
+
+**Official Website**: [mistral.ai](https://mistral.ai/)
+
+---
+
+### Together AI
+
+**Overview:**
+- Access to many open-source models
+- Fast inference
+- Developer-friendly
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.together.xyz/v1`
+- **API Key**: Get from [api.together.xyz](https://api.together.xyz/settings/api-keys)
+- **Popular Models**: Various Llama, Mixtral, and Qwen models
+
+**Official Website**: [together.ai](https://www.together.ai/)
+
+---
+
+### Fireworks AI
+
+**Overview:**
+- Optimized for speed
+- Wide model selection
+- Function calling support
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.fireworks.ai/inference/v1`
+- **API Key**: Get from [fireworks.ai](https://fireworks.ai/api-keys)
+- **Popular Models**: `accounts/fireworks/models/llama-v3p1-70b-instruct`
+
+**Official Website**: [fireworks.ai](https://fireworks.ai/)
+
+---
+
+### Perplexity AI
+
+**Overview:**
+- Online models with web search
+- Real-time information access
+- Citation support
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.perplexity.ai`
+- **API Key**: Get from [perplexity.ai](https://www.perplexity.ai/settings/api)
+- **Popular Models**: `llama-3.1-sonar-large-128k-online`, `llama-3.1-sonar-small-128k-online`
+
+**Official Website**: [perplexity.ai](https://www.perplexity.ai/)
+
+<Note>
+Perplexity's "online" models can search the web in real-time, providing up-to-date information beyond their training data.
+</Note>
+
+---
+
+### DeepSeek
+
+**Overview:**
+- Chinese AI provider
+- Strong coding capabilities
+- Cost-effective pricing
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.deepseek.com/v1`
+- **API Key**: Get from [platform.deepseek.com](https://platform.deepseek.com/api_keys)
+- **Popular Models**: `deepseek-chat`, `deepseek-coder`
+
+**Official Website**: [deepseek.com](https://www.deepseek.com/)
+
+---
+
+### xAI (Grok)
+
+**Overview:**
+- Created by xAI (Elon Musk's AI company)
+- Real-time information access
+- Long context windows
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.x.ai/v1`
+- **API Key**: Get from [x.ai console](https://console.x.ai/)
+- **Popular Models**: `grok-beta`, `grok-vision-beta`
+
+**Official Website**: [x.ai](https://x.ai/)
+
+---
+
+### Cerebras
+
+**Overview:**
+- Ultra-fast inference
+- Wafer-scale AI acceleration
+- Free tier available
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.cerebras.ai/v1`
+- **API Key**: Get from [cloud.cerebras.ai](https://cloud.cerebras.ai/)
+- **Popular Models**: `llama3.1-8b`, `llama3.1-70b`
+
+**Official Website**: [cerebras.ai](https://www.cerebras.ai/)
+
+---
+
+### Z.AI
+
+**Overview:**
+- AI inference platform
+- Multiple model support
+- Competitive pricing
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.z.ai/v1`
+- **API Key**: Get from Z.AI dashboard
+- **Popular Models**: Check Z.AI documentation
+
+---
+
+### 302.AI
+
+**Overview:**
+- Chinese AI platform
+- Multiple models aggregated
+- Pay-as-you-go pricing
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: Check 302.AI documentation
+- **API Key**: Get from 302.AI dashboard
+- **Popular Models**: Various models from different providers
+
+**Official Website**: [302.ai](https://302.ai/)
+
+---
+
+### Novita AI
+
+**Overview:**
+- GPU cloud platform
+- Flexible model deployment
+- Developer-focused
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.novita.ai/v1`
+- **API Key**: Get from [novita.ai](https://novita.ai/)
+- **Popular Models**: Various open-source models
+
+**Official Website**: [novita.ai](https://novita.ai/)
+
+---
+
+### DeepInfra
+
+**Overview:**
+- Serverless inference platform
+- Wide model selection
+- Pay-per-use pricing
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.deepinfra.com/v1/openai`
+- **API Key**: Get from [deepinfra.com](https://deepinfra.com/dash/api_keys)
+- **Popular Models**: Various Llama, Mixtral, and other open models
+
+**Official Website**: [deepinfra.com](https://deepinfra.com/)
+
+---
+
+### SambaNova
+
+**Overview:**
+- AI inference optimization
+- High-performance hardware
+- Enterprise-focused
+
+**Setup:**
+- **Provider Type**: `OpenAI compatible API`
+- **Provider URL**: `https://api.sambanova.ai/v1`
+- **API Key**: Get from SambaNova Cloud
+- **Popular Models**: Optimized Llama and other models
+
+**Official Website**: [sambanova.ai](https://sambanova.ai/)
+
+---
+
+## Custom OpenAI-Compatible APIs
+
+You can connect to any OpenAI-compatible API endpoint:
+
+### Local Servers
+
+Many tools provide OpenAI-compatible endpoints:
+
+- **llama.cpp**: `http://localhost:8080/v1`
+- **llama-cpp-python**: `http://localhost:8000/v1`
+- **LocalAI**: `http://localhost:8080/v1`
+- **text-generation-webui (Oobabooga)**: Configure in extensions
+- **vLLM**: `http://localhost:8000/v1`
+
+### Cloud Deployments
+
+Connect to your own deployed models:
+- Self-hosted OpenAI-compatible APIs
+- Custom model endpoints
+- Private cloud deployments
+
+### Setup for Custom Endpoints
+
+<Steps>
+  <Step title="Select OpenAI compatible API">
+    Choose `OpenAI compatible API` as the provider type.
+  </Step>
+  
+  <Step title="Enter your endpoint URL">
+    Use the full URL including `/v1` (e.g., `http://localhost:8080/v1`).
+  </Step>
+  
+  <Step title="Add API key if required">
+    Some endpoints don't require authentication. Leave blank if not needed.
+  </Step>
+  
+  <Step title="Enter model name manually">
+    Type the exact model name as configured in your server.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Connection Issues
+
+<Warning>
+Common connection problems:
+- Incorrect endpoint URL (missing `/v1` or wrong protocol)
+- Firewall blocking the connection
+- Server not running (for local endpoints)
+- Invalid API key
+</Warning>
+
+### Model Not Found
+
+If models don't load:
+1. Try entering the model name manually
+2. Check provider documentation for exact model names
+3. Verify your API key has access to the model
+4. Some providers don't support model listing
+
+### API Key Issues
+
+If authentication fails:
+1. Verify the API key is copied correctly
+2. Check the key hasn't expired or been revoked
+3. Ensure you're using the right key type (some providers have different key types)
+4. Confirm your account has sufficient credits
+
+### Unsupported Features
+
+Not all providers support all features:
+- **Embeddings**: Not all providers offer embedding models
+- **Vision**: Image support varies by provider and model
+- **Streaming**: Most support streaming, but some don't
+- **Function calling**: Advanced feature not universally supported
+
+## Choosing a Provider
+
+Consider these factors:
+
+| Factor | Best Providers |
+|--------|----------------|
+| **Speed** | Groq, Cerebras, Fireworks AI |
+| **Cost** | DeepSeek, Together AI, Groq (free tier) |
+| **Quality** | Mistral AI, xAI, OpenAI |
+| **Privacy** | Local servers (llama.cpp, LM Studio, Ollama) |
+| **Web access** | Perplexity AI, xAI |
+| **Multilingual** | Mistral AI, DeepSeek, Qwen models |
+| **Coding** | DeepSeek Coder, Codestral, specialized code models |
+
+## Best Practices
+
+1. **Start with free tiers**: Test providers before committing
+2. **Compare pricing**: Costs vary significantly between providers
+3. **Check model availability**: Not all models available on all providers
+4. **Monitor usage**: Track spending and rate limits
+5. **Have fallbacks**: Configure multiple providers for reliability
+6. **Read documentation**: Each provider has specific features and limits
+
+<Note>
+Many developers use multiple providers: local models for privacy-sensitive work, cloud models for complex tasks, and fast providers for real-time interactions.
+</Note>

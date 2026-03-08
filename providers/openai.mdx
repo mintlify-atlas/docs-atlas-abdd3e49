@@ -1,0 +1,147 @@
+---
+title: OpenAI
+description: Set up OpenAI as your AI provider in Obsidian AI Providers
+---
+
+OpenAI provides access to powerful language models like GPT-4 and GPT-3.5 through their API. These models offer state-of-the-art performance for a wide range of tasks.
+
+## Overview
+
+- **Type**: Cloud provider
+- **Cost**: Pay-per-use (see [pricing](https://openai.com/pricing))
+- **API Key Required**: Yes
+- **Installation Required**: No
+- **Official Website**: [https://platform.openai.com/](https://platform.openai.com/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create an OpenAI account">
+    Sign up at [platform.openai.com](https://platform.openai.com/signup) if you don't have an account yet.
+  </Step>
+  
+  <Step title="Add billing information">
+    Go to [Billing settings](https://platform.openai.com/settings/organization/billing/overview) and add a payment method. You'll need to add credits to use the API.
+  </Step>
+  
+  <Step title="Generate an API key">
+    Navigate to [API keys page](https://platform.openai.com/api-keys) and click **Create new secret key**. Copy the key immediately - you won't be able to see it again!
+  </Step>
+</Steps>
+
+<Warning>
+Never share your API key or commit it to version control. Store it securely in Obsidian's AI Providers settings.
+</Warning>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select OpenAI provider">
+    In the AI Providers settings, click **Create AI provider** and select `OpenAI` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    https://api.openai.com/v1
+    ```
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the [API keys page](https://platform.openai.com/api-keys) into the `API key` field.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch available models, then select the model that suits your needs (e.g., `gpt-4o`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify your configuration is working correctly.
+  </Step>
+</Steps>
+
+## Recommended Models
+
+| Model | Description | Best For |
+|-------|-------------|----------|
+| `gpt-4o` | Latest GPT-4 Omni model, multimodal | Complex tasks, vision, best quality |
+| `gpt-4o-mini` | Smaller, faster GPT-4 variant | Fast responses, cost-effective |
+| `gpt-4-turbo` | High intelligence, lower cost than GPT-4 | Complex reasoning tasks |
+| `gpt-3.5-turbo` | Fast and affordable | Simple tasks, high volume |
+| `o1-preview` | Advanced reasoning model | Complex problem solving |
+| `o1-mini` | Faster reasoning model | Coding, math, science |
+
+<Note>
+GPT-4 models support vision capabilities, allowing you to include images in your prompts.
+</Note>
+
+## Embedding Models
+
+For embedding generation (used in RAG and semantic search), OpenAI provides:
+
+- `text-embedding-3-large` - Highest quality embeddings
+- `text-embedding-3-small` - Fast and cost-effective
+- `text-embedding-ada-002` - Legacy model (still supported)
+
+## Troubleshooting
+
+### Rate Limit Errors
+
+If you encounter rate limit errors:
+1. Check your [usage limits](https://platform.openai.com/settings/organization/limits)
+2. Upgrade your account tier by adding more credits
+3. Implement request throttling in plugins that use AI Providers
+
+### Invalid API Key
+
+If you see "Invalid API key" errors:
+1. Verify you copied the entire API key correctly
+2. Check that the key hasn't been revoked in your [API keys page](https://platform.openai.com/api-keys)
+3. Ensure you're using an API key (starts with `sk-`) not an organization ID
+
+### Model Not Available
+
+<Warning>
+Some models (like GPT-4) require specific access tiers. Check your [account limits](https://platform.openai.com/settings/organization/limits) to see which models you can use.
+</Warning>
+
+### Insufficient Credits
+
+If requests fail with billing errors:
+1. Check your [billing overview](https://platform.openai.com/settings/organization/billing/overview)
+2. Add more credits to your account
+3. Verify your payment method is valid
+
+## Pricing Considerations
+
+OpenAI charges based on tokens processed:
+- Input tokens (what you send)
+- Output tokens (what the model generates)
+
+**Cost-saving tips:**
+- Use `gpt-4o-mini` for simpler tasks instead of `gpt-4o`
+- Use `gpt-3.5-turbo` for high-volume, straightforward tasks
+- Keep prompts concise
+- Monitor your usage in the [usage dashboard](https://platform.openai.com/usage)
+
+## Advanced Features
+
+### Reasoning Models (o1 series)
+
+The o1 models use extended thinking time before responding. They're designed for complex reasoning but:
+- Cost more per token
+- Have slower response times
+- Don't support streaming
+- Don't support system prompts in the traditional way
+
+### Vision Capabilities
+
+GPT-4o and GPT-4 Turbo support image inputs. You can include images in your prompts by passing them as base64-encoded data URLs.
+
+### Custom Options
+
+You can pass additional parameters to the OpenAI API:
+- `temperature` - Controls randomness (0.0 to 2.0)
+- `max_tokens` - Maximum response length
+- `top_p` - Nucleus sampling parameter
+- `stop` - Stop sequences

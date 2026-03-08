@@ -1,0 +1,251 @@
+---
+title: Integration
+description: Integrate the AI Providers SDK into your Obsidian plugin
+---
+
+## Overview
+
+Integrating the SDK into your plugin involves two main steps:
+1. Initialize the SDK using `initAI()` in your plugin's `onload()` method
+2. Access the AI Providers service using `waitForAI()` when you need to use AI features
+
+## Using initAI() in Plugin onload
+
+The `initAI()` function handles initialization and displays a fallback settings tab if the AI Providers plugin is not loaded.
+
+```typescript main.ts
+import { Plugin } from 'obsidian';
+import { initAI } from '@obsidian-ai-providers/sdk';
+
+export default class MyPlugin extends Plugin {
+  async onload() {
+    // Wrap your onload code in initAI callback
+    // Do NOT await this call
+    initAI(this.app, this, async () => {
+      // This callback runs after AI Providers is ready
+      await this.loadSettings();
+      this.addSettingTab(new MySettingTab(this.app, this));
+      this.registerCommands();
+    });
+  }
+}
+```
+
+<Warning>
+**Important:** Do NOT `await` the `initAI()` call. The function manages initialization asynchronously and your callback will be invoked when ready.
+</Warning>
+
+## Fallback Settings Tab
+
+Before the AI Providers plugin is loaded and activated, `initAI()` automatically shows a fallback settings tab informing users they need to install AI Providers.
+
+<Tabs>
+
+<Tab title="Default Behavior">
+
+```typescript
+// Show fallback settings tab if AI Providers is not ready
+initAI(this.app, this, async () => {
+  this.addSettingTab(new MySettingTab(this.app, this));
+});
+```
+
+The fallback tab will display:
+- Warning message that AI Providers plugin is required
+- Link to install the AI Providers plugin
+
+</Tab>
+
+<Tab title="Disable Fallback">
+
+```typescript
+// Disable fallback if you have your own fallback UI
+initAI(this.app, this, async () => {
+  this.addSettingTab(new MySettingTab(this.app, this));
+}, { disableFallback: true });
+```
+
+Use `disableFallback: true` if your plugin has its own fallback UI or error handling.
+
+</Tab>
+
+</Tabs>
+
+## Waiting for AI Providers with waitForAI()
+
+After initialization, use `waitForAI()` to access the AI Providers service in any async context.
+
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+// Get the AI Providers service
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Now you can use the service
+console.log('Available providers:', aiProviders.providers);
+```
+
+<Note>
+**Important:** Call `waitForAI()` every time you need access to AI Providers in async code. The instance may change when users modify settings.
+</Note>
+
+### Canceling the Wait
+
+You can cancel waiting for AI Providers if needed:
+
+```typescript
+const aiResolver = await waitForAI();
+
+try {
+  const aiProviders = await aiResolver.promise;
+  // Use aiProviders...
+} catch (error) {
+  console.error('Failed to get AI providers:', error);
+}
+
+// Cancel waiting if needed (e.g., component unmounts)
+aiResolver.cancel();
+```
+
+## Accessing aiProviders Service
+
+Once you have the `aiProviders` service, you can access all available providers and their methods.
+
+### Available Providers
+
+```typescript
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Array of all configured providers
+aiProviders.providers;
+/*
+[
+  {
+    id: "1732815722182",
+    model: "smollm2:135m",
+    name: "Ollama local",
+    type: "ollama",
+    url: "http://localhost:11434",
+    apiKey: "sk-1234567890",
+    availableModels: ['smollm2:135m', 'llama2:latest'],
+  },
+  ...
+]
+*/
+```
+
+### Service Methods
+
+The `aiProviders` service provides these methods:
+
+- `execute()` - Generate text with streaming support
+- `embed()` - Generate embeddings for text
+- `retrieve()` - Perform semantic search (RAG)
+- `fetchModels()` - Fetch available models for a provider
+- `migrateProvider()` - Migrate provider from another plugin
+- `checkCompatibility()` - Verify service version compatibility
+
+## Complete Integration Example
+
+Here's a complete example from the SDK's example plugin:
+
+```typescript main.ts
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { initAI, waitForAI } from '@obsidian-ai-providers/sdk';
+
+interface MyPluginSettings {
+  mySetting: string;
+}
+
+export default class MyPlugin extends Plugin {
+  settings: MyPluginSettings;
+
+  async onload() {
+    initAI(this.app, this, async () => {
+      this.addSettingTab(new MySettingTab(this.app, this));
+    });
+  }
+}
+
+class MySettingTab extends PluginSettingTab {
+  plugin: MyPlugin;
+  selectedProvider: string;
+
+  constructor(app: App, plugin: MyPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  async display(): Promise<void> {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    // Get AI Providers service
+    const aiResolver = await waitForAI();
+    const aiProviders = await aiResolver.promise;
+
+    // Build provider options for dropdown
+    const providers = aiProviders.providers.reduce(
+      (acc, provider) => ({
+        ...acc,
+        [provider.id]: provider.model
+          ? [provider.name, provider.model].join(' ~ ')
+          : provider.name,
+      }),
+      { '': '' }
+    );
+
+    // Check if any providers are available
+    if (Object.keys(providers).length === 1) {
+      new Setting(containerEl)
+        .setName('AI Providers')
+        .setDesc('No AI providers found. Please install an AI provider.');
+      return;
+    }
+
+    // Provider selection dropdown
+    new Setting(containerEl)
+      .setName('Select AI Provider')
+      .addDropdown(dropdown =>
+        dropdown
+          .addOptions(providers)
+          .setValue(this.selectedProvider)
+          .onChange(async value => {
+            this.selectedProvider = value;
+            await this.display();
+          })
+      );
+
+    if (this.selectedProvider) {
+      const provider = aiProviders.providers.find(
+        p => p.id === this.selectedProvider
+      );
+      
+      if (provider) {
+        // Now you can use execute(), embed(), retrieve() etc.
+        // See Example Usage for details
+      }
+    }
+  }
+}
+```
+
+## Version Compatibility Check
+
+The SDK automatically checks compatibility with the AI Providers plugin:
+
+```typescript
+// The SDK requires Service API v3 or higher
+const REQUIRED_AI_PROVIDERS_VERSION = 3;
+
+// Automatic check during initialization
+aiProviders.checkCompatibility(REQUIRED_AI_PROVIDERS_VERSION);
+```
+
+If the version is incompatible, an error is thrown and the fallback settings tab is displayed.
+
+## Next Steps
+
+Now that you've integrated the SDK, learn how to use it in [Example Usage](/sdk/example-usage).

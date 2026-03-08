@@ -1,0 +1,202 @@
+---
+title: Google Gemini
+description: Set up Google Gemini as your AI provider in Obsidian AI Providers
+---
+
+Google Gemini offers powerful multimodal AI models with strong performance across text, vision, and reasoning tasks. Gemini models are known for their speed and cost-effectiveness.
+
+## Overview
+
+- **Type**: Cloud provider
+- **Cost**: Free tier available, pay-per-use for higher usage (see [pricing](https://ai.google.dev/pricing))
+- **API Key Required**: Yes
+- **Installation Required**: No
+- **Official Website**: [https://ai.google.dev/](https://ai.google.dev/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create a Google account">
+    You'll need a Google account to access Google AI Studio.
+  </Step>
+  
+  <Step title="Access Google AI Studio">
+    Go to [Google AI Studio](https://aistudio.google.com/) and sign in with your Google account.
+  </Step>
+  
+  <Step title="Generate an API key">
+    Navigate to [Get API key](https://aistudio.google.com/apikey) and create a new API key. Copy it for use in AI Providers.
+  </Step>
+</Steps>
+
+<Note>
+Google Gemini offers a generous free tier with rate limits suitable for personal use and development.
+</Note>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select Google Gemini provider">
+    In the AI Providers settings, click **Create AI provider** and select `Google Gemini` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    https://generativelanguage.googleapis.com/v1beta/openai
+    ```
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the [API keys page](https://aistudio.google.com/apikey) into the `API key` field.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch available models, then select your preferred model (e.g., `gemini-1.5-flash`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify everything is configured correctly.
+  </Step>
+</Steps>
+
+## Recommended Models
+
+| Model | Context Window | Description | Best For |
+|-------|----------------|-------------|----------|
+| `gemini-2.0-flash-exp` | 1M tokens | Latest experimental flash model | Fast, experimental features |
+| `gemini-1.5-flash` | 1M tokens | Fast and efficient | Most tasks, great value |
+| `gemini-1.5-flash-8b` | 1M tokens | Smaller, faster variant | Simple tasks, high volume |
+| `gemini-1.5-pro` | 2M tokens | Highest quality | Complex reasoning, analysis |
+| `gemini-exp-1206` | 2M tokens | Experimental with thinking | Advanced reasoning |
+
+<Note>
+Gemini models have some of the largest context windows available (up to 2 million tokens), making them excellent for processing large documents.
+</Note>
+
+## Key Features
+
+### Massive Context Windows
+
+Gemini 1.5 models support:
+- 1-2 million token context windows
+- Process entire codebases
+- Analyze multiple long documents simultaneously
+
+### Multimodal Capabilities
+
+All Gemini models support:
+- Text generation
+- Vision and image understanding
+- Code generation and analysis
+
+### Free Tier
+
+Google offers a generous free tier:
+- 15 requests per minute (RPM)
+- 1 million tokens per minute (TPM)
+- 1,500 requests per day (RPD)
+
+Perfect for:
+- Personal projects
+- Development and testing
+- Small-scale applications
+
+## Troubleshooting
+
+### API Key Issues
+
+If your API key isn't working:
+1. Verify you created the key in [Google AI Studio](https://aistudio.google.com/apikey)
+2. Check that the key hasn't been restricted or deleted
+3. Ensure you're using the correct endpoint URL
+
+### Rate Limit Exceeded
+
+If you hit rate limits on the free tier:
+
+<Warning>
+Free tier limits:
+- 15 requests per minute
+- 1 million tokens per minute
+- 1,500 requests per day
+
+For higher limits, consider upgrading to a paid plan.
+</Warning>
+
+### Model Not Available
+
+If a model doesn't appear:
+1. Click the refresh button in AI Providers
+2. Some models may be experimental and require special access
+3. Check [Google AI documentation](https://ai.google.dev/models) for model availability
+
+### Context Length Errors
+
+If you exceed context limits:
+- Gemini 1.5 Flash supports up to 1M tokens
+- Gemini 1.5 Pro supports up to 2M tokens
+- Break very large inputs into chunks if needed
+
+## Pricing Considerations
+
+For paid usage, Google Gemini offers competitive pricing:
+
+**Gemini 1.5 Flash:**
+- Extremely cost-effective
+- Great for high-volume applications
+- Input and output tokens charged separately
+
+**Gemini 1.5 Pro:**
+- Higher quality, slightly higher cost
+- Still competitive with other premium models
+- Best value for complex tasks
+
+**Cost-saving tips:**
+- Use Flash for most tasks
+- Reserve Pro for complex reasoning
+- Use the free tier for development
+- Monitor usage in Google Cloud Console
+
+## Advanced Configuration
+
+### Response Configuration
+
+Customize model behavior:
+- `temperature` - Control randomness (0.0-2.0)
+- `top_p` - Nucleus sampling parameter
+- `top_k` - Top-k sampling parameter
+- `max_tokens` - Maximum response length
+
+### Safety Settings
+
+Gemini has built-in safety filters. If responses are blocked:
+1. Review your prompts for potentially sensitive content
+2. Adjust safety settings in your API calls if needed
+3. Check the [safety documentation](https://ai.google.dev/docs/safety_setting_gemini)
+
+### System Instructions
+
+Gemini supports system instructions (similar to system prompts) to:
+- Define the model's behavior
+- Set context and constraints
+- Specify output formats
+
+## Best Practices
+
+1. **Leverage the context window**: Gemini can handle extremely long inputs
+2. **Start with Flash**: Use Flash model for most tasks, upgrade to Pro when needed
+3. **Use the free tier**: Great for development and personal use
+4. **Monitor quotas**: Check your usage in [Google AI Studio](https://aistudio.google.com/)
+5. **Optimize prompts**: Clear, specific prompts get better results
+
+## OpenAI Compatibility
+
+Google Gemini provides an OpenAI-compatible endpoint, which is what AI Providers uses. This means:
+- Similar API structure to OpenAI
+- Easy migration from/to OpenAI
+- Compatible with OpenAI-based tools
+
+<Note>
+The endpoint `https://generativelanguage.googleapis.com/v1beta/openai` provides OpenAI-compatible access to Gemini models.
+</Note>

@@ -1,0 +1,366 @@
+---
+title: retrieve()
+description: Perform semantic search on documents for RAG implementations
+---
+
+Perform semantic search to find the most relevant text chunks from a collection of documents based on a query. This method is designed for RAG (Retrieval-Augmented Generation) implementations.
+
+## Method Signature
+
+```typescript
+retrieve(params: IAIProvidersRetrievalParams): Promise<IAIProvidersRetrievalResult[]>
+```
+
+## Parameters
+
+<ParamField path="query" type="string" required>
+  The search query to find relevant document chunks.
+  
+  ```typescript
+  query: "machine learning algorithms"
+  ```
+</ParamField>
+
+<ParamField path="documents" type="IAIDocument[]" required>
+  Array of documents to search through. Each document has `content` and optional `meta` fields.
+  
+  ```typescript
+  documents: [
+    {
+      content: "London is the capital of England...",
+      meta: { filename: "geography.md", source: "notes" }
+    },
+    {
+      content: "Paris is the capital of France...",
+      meta: { filename: "cities.md", category: "europe" }
+    }
+  ]
+  ```
+  
+  <Expandable title="Document structure">
+    <ParamField path="content" type="string" required>
+      The text content of the document. Large documents are automatically split into chunks.
+    </ParamField>
+    
+    <ParamField path="meta" type="Record<string, any>">
+      Optional metadata associated with the document. Can include any fields like filename, path, tags, etc.
+      
+      ```typescript
+      meta: {
+        filename: "ML-Notes.md",
+        path: "Notes/ML-Notes.md",
+        size: 5420,
+        modified: 1234567890,
+        tags: ["ai", "research"]
+      }
+      ```
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField path="embeddingProvider" type="IAIProvider" required>
+  The AI provider to use for generating embeddings. Must support embedding models.
+</ParamField>
+
+<ParamField path="onProgress" type="(progress: IAIProvidersRetrievalProgressInfo) => void">
+  Optional callback to track retrieval progress, including document and chunk processing.
+  
+  <Expandable title="Progress info structure">
+    <ParamField path="totalDocuments" type="number">
+      Total number of documents to process.
+    </ParamField>
+    
+    <ParamField path="totalChunks" type="number">
+      Total number of text chunks after splitting documents.
+    </ParamField>
+    
+    <ParamField path="processedDocuments" type="IAIDocument[]">
+      Array of documents that have been fully processed.
+    </ParamField>
+    
+    <ParamField path="processedChunks" type="IAIProvidersRetrievalChunk[]">
+      Array of chunks that have been embedded.
+    </ParamField>
+    
+    <ParamField path="processingType" type="'embedding'">
+      Current processing stage (always 'embedding').
+    </ParamField>
+  </Expandable>
+  
+  ```typescript
+  onProgress: (progress) => {
+    const chunksPercent = (progress.processedChunks.length / progress.totalChunks) * 100;
+    const docsPercent = (progress.processedDocuments.length / progress.totalDocuments) * 100;
+    
+    console.log(`Chunks: ${chunksPercent.toFixed(1)}%`);
+    console.log(`Documents: ${docsPercent.toFixed(1)}%`);
+  }
+  ```
+</ParamField>
+
+<ParamField path="abortController" type="AbortController">
+  Optional AbortController to cancel the retrieval operation.
+  
+  ```typescript
+  const controller = new AbortController();
+  abortController: controller
+  ```
+</ParamField>
+
+## Return Type
+
+<ResponseField name="Promise<IAIProvidersRetrievalResult[]>" type="IAIProvidersRetrievalResult[]">
+  Array of search results sorted by relevance score (highest first). Each result contains:
+  
+  <Expandable title="Result structure">
+    <ResponseField name="content" type="string">
+      The text chunk that matched the query. May be a portion of the original document if it was split.
+    </ResponseField>
+    
+    <ResponseField name="score" type="number">
+      Relevance score (cosine similarity) between the query and chunk. Higher scores indicate better matches.
+      
+      Typically ranges from -1 to 1, with 1 being most similar.
+    </ResponseField>
+    
+    <ResponseField name="document" type="IAIDocument">
+      Reference to the original document containing this chunk. Includes the original `meta` field.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Basic Semantic Search
+
+```typescript
+const documents = [
+  {
+    content: "London is the capital city of England and the United Kingdom. It is located on the River Thames.",
+    meta: { source: "geography.txt", category: "cities" }
+  },
+  {
+    content: "Paris is the capital and most populous city of France. It is situated on the Seine River.",
+    meta: { source: "geography.txt", category: "cities" }
+  }
+];
+
+const results = await aiProviders.retrieve({
+  query: "What is the capital of England?",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0]
+});
+
+// Results are sorted by relevance
+results.forEach(result => {
+  console.log(`Score: ${result.score}`);
+  console.log(`Content: ${result.content}`);
+  console.log(`Source: ${result.document.meta?.source}`);
+});
+```
+
+### RAG with Obsidian Vault Files
+
+```typescript
+// Reading documents from Obsidian vault
+const markdownFiles = this.app.vault.getMarkdownFiles();
+const documents = [];
+
+// Read content from multiple files
+for (const file of markdownFiles.slice(0, 10)) { // Limit for demo
+  try {
+    const content = await this.app.vault.read(file);
+    if (content.trim()) {
+      documents.push({
+        content: content,
+        meta: {
+          filename: file.name,
+          path: file.path,
+          size: content.length,
+          modified: file.stat.mtime
+        }
+      });
+    }
+  } catch (error) {
+    console.warn(`Failed to read ${file.path}:`, error);
+  }
+}
+
+// Perform semantic search with progress tracking
+const results = await aiProviders.retrieve({
+  query: "machine learning algorithms",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0],
+  onProgress: (progress) => {
+    const chunksPercentage = (progress.processedChunks.length / progress.totalChunks) * 100;
+    const docsPercentage = (progress.processedDocuments.length / progress.totalDocuments) * 100;
+    
+    console.log(`Processing chunks: ${progress.processedChunks.length}/${progress.totalChunks} (${chunksPercentage.toFixed(1)}%)`);
+    console.log(`Processing documents: ${progress.processedDocuments.length}/${progress.totalDocuments} (${docsPercentage.toFixed(1)}%)`);
+  }
+});
+
+// Results are sorted by relevance score (highest first)
+results.forEach(result => {
+  console.log(`Score: ${result.score}`);
+  console.log(`File: ${result.document.meta?.filename}`);
+  console.log(`Content preview: ${result.content.substring(0, 100)}...`);
+  console.log(`Path: ${result.document.meta?.path}`);
+});
+
+/*
+Output example:
+Score: 0.92
+File: ML-Notes.md
+Content preview: Machine learning algorithms can be categorized into supervised, unsupervised, and reinforcement...
+Path: Notes/ML-Notes.md
+
+Score: 0.78
+File: AI-Research.md
+Content preview: Recent advances in neural networks have shown promising results in various applications...
+Path: Research/AI-Research.md
+*/
+```
+
+### Working with Large Documents
+
+The `retrieve` method automatically splits large documents into smaller chunks:
+
+```typescript
+const largeDocuments = [
+  {
+    content: `
+      Chapter 1: Introduction to Machine Learning
+      Machine learning is a subset of artificial intelligence that focuses on algorithms and statistical models.
+      
+      Chapter 2: Types of Machine Learning
+      There are three main types: supervised learning, unsupervised learning, and reinforcement learning.
+      
+      Chapter 3: Neural Networks
+      Neural networks are computing systems inspired by biological neural networks.
+    `,
+    meta: { title: "ML Textbook", chapter: "1-3" }
+  }
+];
+
+const results = await aiProviders.retrieve({
+  query: "What are the types of machine learning?",
+  documents: largeDocuments,
+  embeddingProvider: aiProviders.providers[0]
+});
+
+// The method will find the most relevant chunk about ML types
+console.log(results[0].content);
+// "There are three main types: supervised learning, unsupervised learning, and reinforcement learning."
+```
+
+### Progress Tracking
+
+```typescript
+const results = await aiProviders.retrieve({
+  query: "neural networks",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0],
+  onProgress: (progress) => {
+    console.log(`Documents processed: ${progress.processedDocuments.length}/${progress.totalDocuments}`);
+    console.log(`Chunks processed: ${progress.processedChunks.length}/${progress.totalChunks}`);
+    console.log(`Stage: ${progress.processingType}`);
+  }
+});
+```
+
+### With Cancellation
+
+```typescript
+const controller = new AbortController();
+
+try {
+  const results = await aiProviders.retrieve({
+    query: "search query",
+    documents: documents,
+    embeddingProvider: aiProviders.providers[0],
+    abortController: controller,
+    onProgress: (progress) => {
+      if (progress.processedChunks.length > 100) {
+        controller.abort(); // Cancel if too many chunks
+      }
+    }
+  });
+} catch (error) {
+  if ((error as Error).message === 'Aborted') {
+    console.log('Retrieval cancelled');
+  }
+}
+```
+
+### Full RAG Pipeline
+
+```typescript
+// 1. Retrieve relevant context
+const relevantChunks = await aiProviders.retrieve({
+  query: "How do neural networks work?",
+  documents: documents,
+  embeddingProvider: aiProviders.providers[0]
+});
+
+// 2. Build context from top results
+const context = relevantChunks
+  .slice(0, 3) // Top 3 results
+  .map(r => r.content)
+  .join('\n\n');
+
+// 3. Generate response with context
+const response = await aiProviders.execute({
+  provider: aiProviders.providers[0],
+  messages: [
+    { 
+      role: "system", 
+      content: "Answer questions based on the provided context." 
+    },
+    { 
+      role: "user", 
+      content: `Context:\n${context}\n\nQuestion: How do neural networks work?` 
+    }
+  ],
+  onProgress: (chunk, full) => console.log(full)
+});
+
+console.log('RAG Response:', response);
+```
+
+## Chunking Behavior
+
+<Info>
+  The `retrieve()` method automatically splits large documents into smaller chunks for better search accuracy. This ensures that:
+  
+  - Long documents don't dominate the embedding space
+  - Specific sections can be matched more precisely
+  - Results are more granular and relevant
+  
+  You don't need to manually chunk documents before passing them to `retrieve()`.
+</Info>
+
+## Error Handling
+
+```typescript
+try {
+  const results = await aiProviders.retrieve({
+    query: "search query",
+    documents: documents,
+    embeddingProvider: aiProviders.providers[0]
+  });
+  console.log('Found results:', results.length);
+} catch (error) {
+  console.error('Retrieval failed:', error);
+  // Handle errors (e.g., provider issues, invalid documents)
+}
+```
+
+## Performance Tips
+
+<Tip>
+  - Embeddings are automatically cached, so repeated searches are fast
+  - Filter documents before retrieval to reduce processing time
+  - Use `onProgress` to show users feedback for large document sets
+  - Consider limiting the number of documents for very large vaults
+</Tip>

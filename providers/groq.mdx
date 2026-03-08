@@ -1,0 +1,233 @@
+---
+title: Groq
+description: Set up Groq for ultra-fast AI inference in Obsidian AI Providers
+---
+
+Groq provides extremely fast AI inference using their custom Language Processing Unit (LPU) hardware. If speed is your priority, Groq delivers industry-leading response times for supported models.
+
+## Overview
+
+- **Type**: Cloud provider
+- **Cost**: Free tier available, pay-per-use for higher usage (see [pricing](https://groq.com/pricing/))
+- **API Key Required**: Yes
+- **Installation Required**: No
+- **Official Website**: [https://groq.com/](https://groq.com/)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create a Groq account">
+    Sign up at [console.groq.com](https://console.groq.com/) using your email or GitHub account.
+  </Step>
+  
+  <Step title="Generate an API key">
+    Navigate to [API Keys](https://console.groq.com/keys) and create a new API key. Copy it immediately as you won't be able to see it again.
+  </Step>
+</Steps>
+
+<Note>
+Groq offers a generous free tier suitable for development and moderate personal use.
+</Note>
+
+## Setup in AI Providers
+
+<Steps>
+  <Step title="Select Groq provider">
+    In the AI Providers settings, click **Create AI provider** and select `Groq` as the provider type.
+  </Step>
+  
+  <Step title="Configure provider URL">
+    Set the `Provider URL` to:
+    ```
+    https://api.groq.com/openai/v1
+    ```
+  </Step>
+  
+  <Step title="Enter API key">
+    Paste your API key from the [API Keys page](https://console.groq.com/keys) into the `API key` field.
+  </Step>
+  
+  <Step title="Select model">
+    Click the refresh button to fetch available models, then select your preferred model (e.g., `llama3-70b-8192`).
+  </Step>
+  
+  <Step title="Test the provider">
+    Click **Test** to verify your setup is working correctly.
+  </Step>
+</Steps>
+
+## Recommended Models
+
+| Model | Context Window | Description | Best For |
+|-------|----------------|-------------|----------|
+| `llama-3.3-70b-versatile` | 128K tokens | Latest Llama 3.3, excellent quality | Most tasks, best balance |
+| `llama-3.1-70b-versatile` | 128K tokens | High-quality general purpose | Complex reasoning |
+| `llama-3.1-8b-instant` | 128K tokens | Ultra-fast, smaller model | Quick responses |
+| `mixtral-8x7b-32768` | 32K tokens | Mixture of experts model | Diverse tasks |
+| `gemma2-9b-it` | 8K tokens | Google's Gemma model | Efficient performance |
+
+<Note>
+All models on Groq run exceptionally fast thanks to their custom LPU hardware, often delivering responses 10-20x faster than standard GPU inference.
+</Note>
+
+## Key Features
+
+### Ultra-Fast Inference
+
+Groq's LPU technology provides:
+- **Tokens per second**: 500-1000+ tokens/second
+- **Low latency**: Near-instant response start
+- **Consistent speed**: Predictable performance
+- **Real-time feel**: Responses feel instantaneous
+
+### OpenAI-Compatible API
+
+Groq uses an OpenAI-compatible API, making it:
+- Easy to integrate
+- Familiar for developers
+- Simple to switch from OpenAI
+- Compatible with OpenAI-based tools
+
+### Free Tier
+
+Groq's free tier includes:
+- 14,400 requests per day
+- 7,000 requests per minute
+- Suitable for development and personal use
+
+### Supported Models
+
+Groq specializes in:
+- Open-source models (Llama, Mixtral, Gemma)
+- Optimized for their LPU hardware
+- Regular model updates
+- Multiple size options
+
+## Troubleshooting
+
+### Rate Limits
+
+If you hit rate limits:
+
+<Warning>
+**Free tier limits:**
+- 14,400 requests per day
+- 7,000 requests per minute
+- Token limits vary by model
+
+For higher limits, upgrade to a paid plan.
+</Warning>
+
+### API Key Issues
+
+If your API key isn't working:
+1. Verify you copied the entire key from the [console](https://console.groq.com/keys)
+2. Check that the key hasn't been revoked
+3. Ensure you're using the correct endpoint URL
+
+### Model Not Available
+
+If a model doesn't appear:
+1. Click the refresh button in AI Providers settings
+2. Check the [Groq documentation](https://console.groq.com/docs/models) for current model availability
+3. Some models may be temporarily unavailable during maintenance
+
+### Context Length Errors
+
+If you exceed the context limit:
+- Most Llama 3.1 models support up to 128K tokens
+- Older models have 8K-32K limits
+- Break large inputs into smaller chunks if needed
+
+## Pricing Considerations
+
+**Free Tier:**
+- Excellent for development
+- Suitable for personal projects
+- Good rate limits for moderate use
+
+**Paid Plans:**
+- Competitive pricing per token
+- Higher rate limits
+- Priority access
+- Better for production use
+
+**Cost-saving tips:**
+- Use smaller models (8B) for simple tasks
+- Use larger models (70B) for complex reasoning
+- Monitor usage in the [console](https://console.groq.com/usage)
+- Stay within free tier limits when possible
+
+## Advanced Configuration
+
+### Model Parameters
+
+Customize model behavior:
+- `temperature` - Control randomness (0.0-2.0)
+- `max_tokens` - Maximum response length
+- `top_p` - Nucleus sampling parameter
+- `stop` - Stop sequences
+- `frequency_penalty` - Reduce repetition
+- `presence_penalty` - Encourage topic diversity
+
+### Streaming
+
+Groq excels at streaming responses:
+- Ultra-low latency
+- Smooth token delivery
+- Real-time user experience
+- Enabled by default in AI Providers
+
+### Response Format
+
+Control output format:
+- JSON mode for structured output
+- Standard text responses
+- Custom stop sequences
+
+## Best Practices
+
+1. **Leverage the speed**: Design UX that takes advantage of fast responses
+2. **Use appropriate models**: 8B for speed, 70B for quality
+3. **Monitor rate limits**: Check the console for usage stats
+4. **Enable streaming**: Get the full benefit of Groq's speed
+5. **Stay in free tier**: Great for development and personal use
+
+## Use Cases
+
+**Perfect for:**
+- Real-time chat applications
+- Quick document analysis
+- Rapid iteration during development
+- Interactive AI experiences
+- High-volume simple tasks
+
+**Less ideal for:**
+- Tasks requiring the absolute latest models
+- Specialized proprietary models
+- Extreme context lengths (>128K tokens)
+
+## Performance Comparison
+
+Groq typically delivers:
+- **10-20x faster** than standard GPU inference
+- **3-5x faster** than other optimized cloud providers
+- **500+ tokens/second** for most models
+- **Less than 100ms** time to first token
+
+<Note>
+Groq's speed advantage is most noticeable with longer responses. Short prompts benefit less dramatically but still see excellent performance.
+</Note>
+
+## Advantages of Groq
+
+- **Speed**: Industry-leading inference speed
+- **Free tier**: Generous limits for development
+- **Low latency**: Near-instant response start
+- **OpenAI compatible**: Easy integration
+- **Reliability**: Consistent, predictable performance
+- **Open models**: Access to latest open-source models
+
+<Note>
+If speed is a priority and you're okay with open-source models (not GPT-4 or Claude), Groq is an excellent choice.
+</Note>

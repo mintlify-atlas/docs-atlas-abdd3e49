@@ -1,0 +1,219 @@
+---
+title: Compatibility
+description: Version checking and compatibility management for the AI Providers SDK
+---
+
+## Version Field
+
+The `IAIProvidersService` interface includes a `version` field that indicates the service API version. This allows plugins to check compatibility before making SDK calls.
+
+```typescript
+export interface IAIProvidersService {
+  version: number;  // Current API version
+  providers: IAIProvider[];
+  execute: (params: IAIProvidersExecuteParams) => Promise<string | IChunkHandler>;
+  embed: (params: IAIProvidersEmbedParams) => Promise<number[][]>;
+  retrieve: (params: IAIProvidersRetrievalParams) => Promise<IAIProvidersRetrievalResult[]>;
+  fetchModels: (params: { provider: IAIProvider; abortController?: AbortController }) => Promise<string[]>;
+  checkCompatibility: (requiredVersion: number) => void;
+  migrateProvider: (provider: IAIProvider) => Promise<IAIProvider | false>;
+}
+```
+
+<Note>
+  The current service API version is **3** (as of SDK 1.5.0).
+</Note>
+
+## checkCompatibility() Method
+
+The `checkCompatibility()` method validates that the installed AI Providers plugin meets the minimum version requirement for your plugin.
+
+### Method Signature
+
+```typescript
+checkCompatibility(requiredVersion: number): void
+```
+
+### Usage Example
+
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Check if the plugin supports the required API version
+try {
+  aiProviders.checkCompatibility(3);
+  console.log('AI Providers plugin is compatible');
+} catch (error) {
+  console.error('Compatibility check failed:', error);
+  // Plugin will show a Notice to the user
+}
+```
+
+### What Happens on Version Mismatch
+
+<Warning>
+  If the required version is higher than the current version, `checkCompatibility()` throws an error and displays a Notice in Obsidian UI.
+</Warning>
+
+Implementation from `AIProvidersService.ts:284`:
+
+```typescript
+checkCompatibility(requiredVersion: number) {
+  if (requiredVersion > this.version) {
+    new Notice(I18n.t('errors.pluginMustBeUpdatedFormatted'));
+    throw new Error(I18n.t('errors.pluginMustBeUpdated'));
+  }
+}
+```
+
+When a version mismatch occurs:
+1. A Notice is displayed to the user asking them to update the AI Providers plugin
+2. An error is thrown that your plugin should catch
+3. Your plugin should gracefully degrade or disable features that require the newer API
+
+### Error Handling Pattern
+
+```typescript
+try {
+  aiProviders.checkCompatibility(3);
+  
+  // Safe to use API v3 features
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Test",
+    onProgress: (chunk, full) => console.log(full)
+  });
+} catch (error) {
+  // Handle incompatibility
+  console.error('AI Providers plugin needs to be updated');
+  
+  // Fallback to older API or disable feature
+  new Notice('Please update the AI Providers plugin to use this feature');
+}
+```
+
+## SDK Version Compatibility Table
+
+| SDK Version | Service API Version | Breaking Changes |
+|-------------|---------------------|------------------|
+| 1.5.0+ | 3 | `execute()` returns `Promise<string>` by default; `IChunkHandler` deprecated |
+| 1.4.x | 2 | Added `retrieve()` method for semantic search |
+| 1.3.x | 1 | Initial stable release with `execute()`, `embed()`, `fetchModels()` |
+
+## Checking Version Directly
+
+You can check the version directly without throwing an error:
+
+```typescript
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+console.log('Current API version:', aiProviders.version);
+
+if (aiProviders.version >= 3) {
+  // Use new execute() Promise API
+  const result = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Test",
+    onProgress: (chunk, full) => console.log(full)
+  });
+} else {
+  // Fall back to legacy IChunkHandler API
+  const handler = await aiProviders.execute({
+    provider: aiProviders.providers[0],
+    prompt: "Test"
+  });
+  handler.onData((chunk, full) => console.log(full));
+}
+```
+
+## Best Practices
+
+1. **Check early**: Call `checkCompatibility()` during plugin initialization
+2. **Handle gracefully**: Catch compatibility errors and inform users
+3. **Version-specific code**: Use version checks for conditional feature enablement
+4. **Document requirements**: Specify minimum AI Providers plugin version in your plugin's README
+5. **Test compatibility**: Test your plugin with different AI Providers versions
+
+## Required Version Recommendations
+
+### When to Require Version 3+
+
+Require API version 3 if your plugin uses:
+- `execute()` with `onProgress` callback (new Promise API)
+- `AbortController` for cancellation
+- Direct promise-based error handling
+
+```typescript
+aiProviders.checkCompatibility(3);
+```
+
+### When to Require Version 2+
+
+Require API version 2 if your plugin uses:
+- `retrieve()` method for semantic search
+- Document retrieval with progress tracking
+
+```typescript
+aiProviders.checkCompatibility(2);
+```
+
+### When Version 1 is Sufficient
+
+Version 1 is sufficient if you only use:
+- Basic `execute()` with `IChunkHandler` (deprecated)
+- `embed()` for embeddings
+- `fetchModels()` for model listing
+
+```typescript
+aiProviders.checkCompatibility(1);
+```
+
+## Migration Strategy
+
+When updating your plugin to use newer API features:
+
+1. **Update compatibility check**:
+```typescript
+// Old
+aiProviders.checkCompatibility(2);
+
+// New
+aiProviders.checkCompatibility(3);
+```
+
+2. **Update minimum requirements** in your plugin's manifest and documentation
+
+3. **Test with older versions** to ensure graceful degradation
+
+4. **Communicate to users** about updating dependencies
+
+## Troubleshooting
+
+### Error: "Plugin must be updated"
+
+**Cause**: The AI Providers plugin installed is older than required.
+
+**Solution**: 
+1. Update the AI Providers plugin to the latest version
+2. Restart Obsidian
+3. Try again
+
+### Version Check Always Fails
+
+**Cause**: AI Providers plugin may not be loaded yet.
+
+**Solution**: Use `waitForAI()` to ensure the plugin is ready:
+
+```typescript
+import { waitForAI } from '@obsidian-ai-providers/sdk';
+
+const aiResolver = await waitForAI();
+const aiProviders = await aiResolver.promise;
+
+// Now safe to check compatibility
+aiProviders.checkCompatibility(3);
+```

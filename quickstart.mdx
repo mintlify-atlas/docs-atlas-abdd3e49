@@ -1,80 +1,339 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Set up your first AI provider in under 5 minutes and test it works
 ---
 
-## Get started in three steps
+## Overview
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide walks you through setting up your first AI provider from scratch. We'll cover both a **local option** (Ollama—free and private) and a **cloud option** (OpenAI—powerful but requires an API key).
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Choose **Ollama** if you want completely offline AI with no costs. Choose **OpenAI** if you want access to GPT-4 and don't mind paying for API usage.
 </Note>
+
+## Option 1: Set Up Ollama (Local & Free)
+
+Ollama is the easiest way to run AI models locally on your computer. It's completely free, private, and works offline.
+
+<Steps>
+
+### Install Ollama
+
+1. Visit [ollama.com](https://ollama.com/)
+2. Download Ollama for your operating system:
+   - **macOS**: Download the `.dmg` and install
+   - **Linux**: Run the install script: `curl -fsSL https://ollama.com/install.sh | sh`
+   - **Windows**: Download the installer and run it
+3. Verify Ollama is running:
+   - macOS/Windows: Look for the Ollama icon in your system tray
+   - Linux: Ollama runs as a background service
+
+### Download a Model
+
+Ollama needs at least one model to work. Download a recommended model:
+
+```bash
+# Recommended: Gemma 2 (2B - fast and capable)
+ollama pull gemma2
+
+# Alternative: Llama 3.2 (3B - more powerful)
+ollama pull llama3.2
+
+# Alternative: Mistral (7B - even more capable, slower)
+ollama pull mistral
+```
+
+<Note>
+  You can browse all available models at [ollama.com/library](https://ollama.com/library). Smaller models (2-3B parameters) are faster but less capable. Larger models (7B+) are more powerful but slower.
+</Note>
+
+### Verify Ollama is Working
+
+Test that Ollama is responding:
+
+```bash
+ollama list
+```
+
+You should see your downloaded model(s) listed. If this works, Ollama is ready!
+
+### Configure Ollama in AI Providers
+
+1. Open Obsidian and go to **Settings → AI Providers**
+2. Click **Add Provider**
+3. In the provider form:
+   - **Provider Type**: Select `Ollama`
+   - **Name**: Enter a friendly name like "Ollama Local"
+   - **Provider URL**: Should auto-fill to `http://localhost:11434` (the default Ollama endpoint)
+   - **API Key**: Leave empty (not needed for Ollama)
+4. Click the **refresh icon** next to Model to fetch available models
+5. Select your model from the dropdown (e.g., `gemma2:latest`)
+6. Click **Save**
+
+<Warning>
+  If the model refresh fails, make sure Ollama is running. On macOS, check the menu bar. On Linux, run `sudo systemctl status ollama`. On Windows, check the system tray.
+</Warning>
+
+### Test Your Ollama Provider
+
+Let's verify it works:
+
+1. Install a plugin that uses AI Providers, like [Local GPT](https://obsidian.md/plugins?id=local-gpt)
+2. Or test directly in the developer console:
+   - Press `Cmd/Ctrl + Shift + I` to open Developer Tools
+   - Go to the **Console** tab
+   - Paste this code:
+
+```javascript
+const { waitForAI } = require('@obsidian-ai-providers/sdk');
+
+(async () => {
+    const aiResolver = await waitForAI();
+    const aiProviders = await aiResolver.promise;
+    
+    console.log('Available providers:', aiProviders.providers.length);
+    
+    const response = await aiProviders.execute({
+        provider: aiProviders.providers[0],
+        prompt: "Say hello in one sentence.",
+        onProgress: (chunk, full) => console.log(full)
+    });
+    
+    console.log('Final response:', response);
+})();
+```
+
+You should see the AI's response streaming in the console.
+
+</Steps>
+
+### Troubleshooting Ollama
+
+<Accordion title="Model list is empty or refresh fails">
+  **Cause**: Ollama isn't running or isn't accessible.
+  
+  **Solutions**:
+  - Make sure Ollama is running (check system tray/menu bar)
+  - Verify the URL is `http://localhost:11434`
+  - Test manually: open `http://localhost:11434` in your browser (should show "Ollama is running")
+  - Check firewall settings aren't blocking localhost connections
+</Accordion>
+
+<Accordion title="Streaming completion fails or hangs">
+  **Cause**: CORS issues with Ollama's default configuration.
+  
+  **Solution**: Set the `OLLAMA_ORIGINS` environment variable to allow all origins:
+  
+  - **macOS**: Run `launchctl setenv OLLAMA_ORIGINS "*"` then restart Ollama
+  - **Linux**: Add `Environment="OLLAMA_ORIGINS=*"` to `/etc/systemd/system/ollama.service` and run `sudo systemctl daemon-reload && sudo systemctl restart ollama`
+  - **Windows**: Set system environment variable `OLLAMA_ORIGINS=*` and restart Ollama
+  
+  See [Ollama FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-do-i-configure-ollama-server) for more details.
+</Accordion>
+
+<Accordion title="Model is too slow">
+  **Cause**: Model is too large for your hardware.
+  
+  **Solution**: Try a smaller model:
+  - `gemma2:2b` (2 billion parameters - very fast)
+  - `llama3.2:3b` (3 billion parameters - balanced)
+  - `qwen2.5:3b` (3 billion parameters - good for coding)
+</Accordion>
+
+---
+
+## Option 2: Set Up OpenAI (Cloud)
+
+OpenAI provides access to GPT-4 and other powerful models through their API. You'll need an API key and will be charged based on usage.
+
+<Steps>
+
+### Create an OpenAI Account
+
+1. Go to [platform.openai.com](https://platform.openai.com/)
+2. Sign up or log in to your account
+3. Add a payment method (required for API access)
+4. Navigate to **API Keys** in the left sidebar
+
+### Generate an API Key
+
+1. Click **Create new secret key**
+2. Give it a name like "Obsidian AI Providers"
+3. Set permissions to **All** or customize as needed
+4. Click **Create secret key**
+5. **Copy the key immediately**—you won't be able to see it again!
+
+<Warning>
+  Keep your API key secure! Don't share it or commit it to version control. If you lose it, you'll need to create a new one.
+</Warning>
+
+### Configure OpenAI in AI Providers
+
+1. Open Obsidian and go to **Settings → AI Providers**
+2. Click **Add Provider**
+3. In the provider form:
+   - **Provider Type**: Select `OpenAI`
+   - **Name**: Enter "OpenAI" or "GPT-4"
+   - **Provider URL**: Enter `https://api.openai.com/v1`
+   - **API Key**: Paste your API key from step 2
+4. Click the **refresh icon** next to Model to fetch available models
+5. Select your preferred model:
+   - `gpt-4o` (recommended - fast and capable)
+   - `gpt-4o-mini` (cheaper, good for most tasks)
+   - `gpt-3.5-turbo` (cheapest option)
+6. Click **Save**
+
+### Test Your OpenAI Provider
+
+Verify your OpenAI connection works:
+
+1. Open Developer Tools (`Cmd/Ctrl + Shift + I`)
+2. Go to the **Console** tab
+3. Run this test:
+
+```javascript
+const { waitForAI } = require('@obsidian-ai-providers/sdk');
+
+(async () => {
+    const aiResolver = await waitForAI();
+    const aiProviders = await aiResolver.promise;
+    
+    // Find your OpenAI provider
+    const openai = aiProviders.providers.find(p => p.type === 'openai');
+    
+    if (!openai) {
+        console.error('OpenAI provider not found');
+        return;
+    }
+    
+    console.log('Testing OpenAI with model:', openai.model);
+    
+    const response = await aiProviders.execute({
+        provider: openai,
+        prompt: "What is the capital of France? Answer in one word.",
+        onProgress: (chunk, full) => console.log('Streaming:', full)
+    });
+    
+    console.log('Final response:', response);
+})();
+```
+
+You should see "Paris" (or similar) stream in the console.
+
+</Steps>
+
+### Troubleshooting OpenAI
+
+<Accordion title="API key invalid or authentication failed">
+  **Cause**: Incorrect or expired API key.
+  
+  **Solutions**:
+  - Double-check you copied the entire key (starts with `sk-`)
+  - Make sure there are no extra spaces before/after the key
+  - Verify the key hasn't been revoked at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+  - Create a new API key if the old one doesn't work
+</Accordion>
+
+<Accordion title="Rate limit or quota exceeded">
+  **Cause**: You've hit OpenAI's usage limits or your account doesn't have credits.
+  
+  **Solutions**:
+  - Check your usage at [platform.openai.com/usage](https://platform.openai.com/usage)
+  - Add credits to your account or upgrade your plan
+  - Wait for your rate limit to reset (usually per-minute limits)
+  - Use a smaller/cheaper model like `gpt-4o-mini` or `gpt-3.5-turbo`
+</Accordion>
+
+<Accordion title="Model not available">
+  **Cause**: Your account doesn't have access to the selected model.
+  
+  **Solution**: Not all accounts have immediate access to all models (especially GPT-4). Try:
+  - `gpt-4o-mini` (available to all paid accounts)
+  - `gpt-3.5-turbo` (available to all accounts)
+  - Check [platform.openai.com/docs/models](https://platform.openai.com/docs/models) for your account tier's model access
+</Accordion>
+
+---
+
+## Using Multiple Providers
+
+You can configure as many providers as you want! For example:
+
+- **Ollama** for quick, free local inference
+- **OpenAI GPT-4o** for complex reasoning tasks
+- **Anthropic Claude** for long-context work
+- **Groq** for ultra-fast inference
+
+<Card title="Manage multiple providers" icon="layer-group">
+  Each provider configuration is independent. Plugins that use AI Providers typically let you choose which provider to use for each task.
+</Card>
+
+## Next Steps
+
+Now that you have a working AI provider, explore what you can do:
+
+<CardGroup cols={2}>
+  <Card title="User Guide" icon="book" href="/user-guide/overview">
+    Learn how to manage providers, switch models, and troubleshoot issues
+  </Card>
+  <Card title="Supported Providers" icon="server" href="/providers/ollama">
+    Explore all 18+ supported providers and their setup instructions
+  </Card>
+  <Card title="Plugin Integration" icon="plug" href="/user-guide/managing-providers">
+    Learn how to manage and configure AI providers
+  </Card>
+  <Card title="Developer SDK" icon="code" href="/sdk/installation">
+    Build your own AI-powered plugins using the SDK
+  </Card>
+</CardGroup>
+
+## Advanced: Testing Embeddings & RAG
+
+If you're interested in embeddings or semantic search (RAG), here's a quick test:
+
+```javascript
+const { waitForAI } = require('@obsidian-ai-providers/sdk');
+
+(async () => {
+    const aiResolver = await waitForAI();
+    const aiProviders = await aiResolver.promise;
+    
+    // Test embedding generation
+    const embedding = await aiProviders.embed({
+        provider: aiProviders.providers[0],
+        input: "This is a test sentence."
+    });
+    
+    console.log('Embedding length:', embedding.length);
+    console.log('First 10 dimensions:', embedding.slice(0, 10));
+    
+    // Test semantic search
+    const documents = [
+        { content: "Paris is the capital of France.", meta: { id: 1 } },
+        { content: "London is the capital of England.", meta: { id: 2 } },
+        { content: "Berlin is the capital of Germany.", meta: { id: 3 } }
+    ];
+    
+    const results = await aiProviders.retrieve({
+        query: "What is the capital of France?",
+        documents: documents,
+        embeddingProvider: aiProviders.providers[0]
+    });
+    
+    console.log('Top result:', results[0].content);
+    console.log('Relevance score:', results[0].score);
+})();
+```
+
+<Note>
+  Embeddings are automatically cached in IndexedDB, so repeated embedding of the same text is instant and free!
+</Note>
+
+## Getting Help
+
+If you run into issues:
+
+- Check troubleshooting sections in provider-specific guides
+- Review provider-specific setup docs in [Providers section](/providers/ollama)
+- Open an issue on [GitHub](https://github.com/pfrankov/obsidian-ai-providers/issues)
+- Contact the developer on Telegram: [@pavel_frankov](https://t.me/pavel_frankov)
