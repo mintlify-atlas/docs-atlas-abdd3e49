@@ -1,0 +1,102 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Obsidian AI Providers",
+  "projectDescription": "A centralized hub for managing AI provider configurations and exposing a unified SDK for Obsidian plugins to integrate AI capabilities.",
+  "theme": "palm",
+  "primaryColor": "#906bda",
+  "lightColor": "#906bda",
+  "darkColor": "#6c6484",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "user-guide/overview",
+              "user-guide/managing-providers"
+            ]
+          },
+          {
+            "group": "Providers",
+            "pages": [
+              "providers/ollama",
+              "providers/openai",
+              "providers/anthropic",
+              "providers/google-gemini",
+              "providers/openrouter",
+              "providers/lm-studio",
+              "providers/groq",
+              "providers/other-providers"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "sdk/installation",
+              "sdk/integration",
+              "sdk/example-usage"
+            ]
+          },
+          {
+            "group": "Core API",
+            "pages": [
+              "sdk/api/execute",
+              "sdk/api/embed",
+              "sdk/api/retrieve",
+              "sdk/api/fetch-models"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "sdk/advanced/migration-guide",
+              "sdk/advanced/error-handling",
+              "sdk/advanced/compatibility",
+              "sdk/advanced/typescript-types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Centralized AI provider configuration for Obsidian plugins",
+    "Support for 20+ AI providers including OpenAI, Anthropic, Ollama, and Google Gemini",
+    "Text generation and completion with streaming support",
+    "Embeddings generation with automatic caching",
+    "RAG (Retrieval-Augmented Generation) semantic search",
+    "TypeScript SDK for plugin developers",
+    "Multi-language support (11 languages)",
+    "Provider migration and compatibility checking"
+  ],
+  "publicApiSurface": [
+    "initAI(app, plugin, onDone, options?)",
+    "waitForAI()",
+    "aiProviders.execute(params)",
+    "aiProviders.embed(params)",
+    "aiProviders.retrieve(params)",
+    "aiProviders.fetchModels(params)",
+    "aiProviders.migrateProvider(provider)",
+    "aiProviders.checkCompatibility(requiredVersion)",
+    "IAIProvider",
+    "IAIProvidersService",
+    "IAIProvidersExecuteParams",
+    "IAIProvidersEmbedParams",
+    "IAIProvidersRetrievalParams"
+  ]
+}
